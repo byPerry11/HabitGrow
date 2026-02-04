@@ -30,4 +30,7 @@ urlpatterns = [
     # API Documentation (Swagger/OpenAPI)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    
+    # Users app (Formulario de registro tradicional)
+    path('users/', include('users.urls')),
 ]
