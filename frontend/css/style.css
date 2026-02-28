@@ -1,0 +1,37 @@
+/* Global Styles */
+:root {
+    /* Color Palette */
+    --color-primary: #4ade80;
+    /* Green */
+    --color-secondary: #3d3635;
+    /* Earth */
+    --color-background: #fdfaf6;
+    /* Cream */
+    --color-text: #3d3635;
+
+    /* Typography */
+    --font-heading: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+}
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-heading);
+}
+
+#app {
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}

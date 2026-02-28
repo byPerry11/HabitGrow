@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HabitGrow - Tu Jardín de Hábitos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="icon" href="assets/icon.png">
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981', // Emerald primary
+                            600: '#059669',
+                            900: '#064e3b',
+                        },
+                        earth: {
+                            500: '#d97706', // Amber/Earth
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% {
+                transform: translateY(0px) rotate(0deg);
+            }
+
+            50% {
+                transform: translateY(-12px) rotate(1deg);
+            }
+
+            100% {
+                transform: translateY(0px) rotate(0deg);
+            }
+        }
+
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float-delayed {
+            0% {
+                transform: translateY(0px) scale(1);
+            }
+
+            50% {
+                transform: translateY(-8px) scale(1.05);
+            }
+
+            100% {
+                transform: translateY(0px) scale(1);
+            }
+        }
+
+        .animate-float-delayed {
+            animation: float-delayed 7s ease-in-out infinite;
+            animation-delay: 1s;
+        }
+
+        @keyframes wiggle {
+
+            0%,
+            100% {
+                transform: rotate(-3deg);
+            }
+
+            50% {
+                transform: rotate(3deg);
+            }
+        }
+
+        .animate-wiggle {
+            animation: wiggle 2s ease-in-out infinite;
+        }
+
+        .habit-checkbox:checked+div {
+            background-color: #10b981;
+            border-color: #10b981;
+        }
+
+        .habit-checkbox:checked+div svg {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        /* Glass styling */
+        .glass-pill {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Card "On Top" effect */
+        .card-elevated {
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+
+<body class="bg-[#F3F4F6] text-slate-800 font-sans h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR -->
+    <aside
+        class="w-20 lg:w-64 bg-white border-r border-gray-200 flex flex-col justify-between transition-all duration-300 z-20 shadow-sm shrink-0">
+        <div>
+            <!-- Logo -->
+            <div class="h-24 flex items-center justify-center lg:justify-start lg:px-8">
+                <div
+                    class="w-12 h-12 bg-transparent rounded-xl flex items-center justify-center overflow-hidden shadow-lg shadow-slate-900/10">
+                    <img src="assets/icon.png" alt="Logo" class="w-full h-full object-cover">
+                </div>
+                <span
+                    class="hidden lg:block ml-3 font-extrabold text-2xl text-slate-800 tracking-tight">HabitGrow</span>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="mt-4 px-4 space-y-2">
+                <button onclick="changePage('home')" id="nav-home"
+                    class="nav-item w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl bg-slate-900 text-white transition-all group relative shadow-lg shadow-slate-900/20">
+                    <i class="ph-fill ph-house text-2xl"></i>
+                    <span class="hidden lg:block ml-3 font-semibold">Inicio</span>
+                </button>
+
+                <button onclick="changePage('stats')" id="nav-stats"
+                    class="nav-item w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md transition-all group">
+                    <i class="ph-bold ph-chart-bar text-2xl"></i>
+                    <span class="hidden lg:block ml-3 font-semibold">Estadísticas</span>
+                </button>
+
+                <button onclick="changePage('profile')" id="nav-profile"
+                    class="nav-item w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md transition-all group">
+                    <i class="ph-bold ph-user text-2xl"></i>
+                    <span class="hidden lg:block ml-3 font-semibold">Perfil</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Logout -->
+        <div class="p-6">
+            <button onclick="logout()"
+                class="w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all">
+                <i class="ph-bold ph-sign-out text-2xl"></i>
+                <span class="hidden lg:block ml-3 font-semibold">Salir</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-8 overflow-y-auto relative">
+
+        <!-- Header (Shared) -->
+        <header id="mainHeader"
+            class="flex justify-between items-center bg-white/70 backdrop-blur-xl p-6 rounded-[2rem] shadow-sm border border-white/50 mb-12">
+            <div>
+                <h2 class="text-3xl font-extrabold text-slate-800" id="headerTitle">Hola, <span id="userName"
+                        class="text-brand-600">Jardinero</span> 👋</h2>
+                <p class="text-slate-500 font-medium mt-1" id="headerSubtitle">¡Hagamos crecer tus hábitos hoy!</p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div
+                    class="flex items-center gap-2 bg-yellow-100 px-4 py-2 rounded-full border border-yellow-200 shadow-sm">
+                    <i class="ph-fill ph-coin text-yellow-500 text-xl"></i>
+                    <span id="userCoins" class="font-bold text-yellow-700">0</span>
+                </div>
+
+                <!-- Profile Picture - Click to view profile -->
+                <div class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform relative group"
+                    onclick="changePage('profile')">
+                    <img id="headerProfilePic" src="https://ui-avatars.com/api/?name=User&background=10b981&color=fff"
+                        alt="Profile" class="w-full h-full object-cover">
+                    <div
+                        class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                        <i class="ph-bold ph-user text-white text-lg"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- VIEW: HOME (Inicio) -->
+        <div id="homeView" class="animate-fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Pet Card -->
+                <div
+                    class="lg:col-span-2 bg-gradient-to-br from-brand-500 to-brand-600 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl card-elevated h-96 flex flex-col justify-between">
+                    <!-- Background Pattern -->
+                    <div class="absolute inset-0 opacity-10"
+                        style="background-image: radial-gradient(circle, white 2px, transparent 2.5px); background-size: 24px 24px;">
+                    </div>
+
+                    <div class="relative z-10 flex justify-between items-start" id="petInfoContainer">
+                        <div>
+                            <span
+                                class="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border border-white/10">Compañero</span>
+                            <h3 id="petName" class="text-4xl font-extrabold mt-3 tracking-tight">Tu Mascota</h3>
+                            <p id="petSpecies" class="text-brand-100 font-medium">Estado: <span
+                                    id="petStatus">Desconocido</span></p>
+                        </div>
+                        <div
+                            class="flex items-center gap-2 bg-white/20 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                            <div id="petStatusIndicator" class="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-pulse">
+                            </div>
+                            <span class="text-xs font-bold">Saludable</span>
+                        </div>
+                    </div>
+
+                    <!-- Centered Pet Visual -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none"
+                        id="petContainer">
+                        <!-- SVG Injected Here -->
+                    </div>
+
+                    <div class="relative z-10 bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 mt-auto"
+                        id="petHealthContainer">
+                        <div class="flex justify-between text-sm font-bold mb-2">
+                            <span>Energía Vital</span>
+                            <span id="hpText">100%</span>
+                        </div>
+                        <div class="w-full bg-black/20 rounded-full h-3 overflow-hidden">
+                            <div id="hpBar"
+                                class="bg-gradient-to-r from-emerald-300 to-emerald-100 h-full rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                                style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Habits List Column -->
+                <div class="flex flex-col gap-6">
+                    <!-- Habits List -->
+                    <section
+                        class="flex-1 flex flex-col min-h-0 bg-white/50 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/60 shadow-lg h-96">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-slate-800">
+                                <i class="ph-duotone ph-check-circle text-brand-500 mr-2"></i>
+                                Hábitos de Hoy
+                            </h2>
+                            <button onclick="toggleModal()"
+                                class="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20 active:scale-95">
+                                <i class="ph-bold ph-plus"></i>
+                            </button>
+                        </div>
+
+                        <div id="habitsList" class="flex flex-col gap-3 overflow-y-auto pr-2 pb-4 flex-1">
+                            <!-- JS will populate this -->
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="emptyState"
+                            class="hidden flex flex-col items-center justify-center py-8 text-center bg-white/50 rounded-2xl border border-dashed border-slate-200">
+                            <div
+                                class="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mb-3 text-slate-300">
+                                <i class="ph-fill ph-plant text-2xl"></i>
+                            </div>
+                            <h3 class="text-sm font-bold text-slate-700">Sin hábitos</h3>
+                            <p class="text-slate-400 text-xs max-w-[150px] mx-auto mt-1">Empieza tu aventura.</p>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: STATS (Estadísticas) -->
+        <div id="statsView" class="hidden animate-fade-in">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Progress Card -->
+                <div
+                    class="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-lg border border-white/60 flex flex-col justify-between card-elevated h-fit">
+                    <div>
+                        <h3 class="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2">
+                            <i class="ph-duotone ph-chart-bar text-brand-500"></i>
+                            Tu Progreso Globlal
+                        </h3>
+
+                        <div class="space-y-6">
+                            <!-- Level -->
+                            <div>
+                                <div class="flex justify-between text-sm font-bold text-slate-600 mb-2">
+                                    <span>Nivel Actual</span>
+                                    <span class="text-brand-600" id="userLevel">1</span>
+                                </div>
+                                <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden shadow-inner">
+                                    <div id="xpBar"
+                                        class="bg-brand-500 h-full rounded-full transition-all duration-500 relative overflow-hidden"
+                                        style="width: 0%">
+                                        <div
+                                            class="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]">
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-xs text-slate-400 mt-2 text-right">XP: <span id="userXP">0</span> / <span
+                                        id="nextLevelXP">100</span></p>
+                            </div>
+
+                            <!-- Stats Grid -->
+                            <div class="grid grid-cols-2 gap-4 mt-6">
+                                <div class="bg-orange-50 p-4 rounded-2xl border border-orange-100 text-center">
+                                    <div class="text-earth-500 text-2xl mb-1"><i class="ph-fill ph-fire"></i></div>
+                                    <div class="text-2xl font-black text-slate-800" id="streakCount">0</div>
+                                    <div class="text-xs font-bold text-slate-400 uppercase">Racha Días</div>
+                                </div>
+                                <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 text-center">
+                                    <div class="text-blue-500 text-2xl mb-1"><i class="ph-fill ph-check-circle"></i>
+                                    </div>
+                                    <div class="text-2xl font-black text-slate-800" id="habitsDone">0</div>
+                                    <div class="text-xs font-bold text-slate-400 uppercase">Hábitos</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Daily Progress -->
+                <div
+                    class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col gap-6 relative overflow-hidden h-fit">
+                    <div
+                        class="absolute right-0 top-0 w-48 h-48 bg-brand-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2">
+                    </div>
+
+                    <div class="relative z-10 w-full">
+                        <div class="flex items-center gap-2 mb-2">
+                            <span
+                                class="px-2 py-0.5 bg-brand-100 text-brand-700 rounded-full text-[10px] font-bold uppercase tracking-wide">Diario</span>
+                            <span class="text-slate-400 text-xs font-semibold" id="currentDateDisplay">Hoy</span>
+                        </div>
+                        <h3 class="text-2xl font-bold text-slate-800 mb-2"><span id="completedCount"
+                                class="text-brand-600">0</span>/ <span id="totalCount">0</span> Hábitos</h3>
+                        <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden mt-2">
+                            <div id="mainProgressBar"
+                                class="h-full bg-brand-500 rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(16,185,129,0.4)]"
+                                style="width: 0%"></div>
+                        </div>
+                        <p class="text-slate-500 text-sm mt-3 font-medium">¡Mantén el ritmo! Tu mascota depende
+                            de ti.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Heat Map Calendar -->
+            <div
+                class="bg-white/80 backdrop-blur-xl p-6 rounded-[2.5rem] shadow-lg border border-white/60 mt-8 max-w-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+                        <i class="ph-duotone ph-calendar text-brand-500"></i>
+                        Constancia Mensual
+                    </h3>
+                    <div class="flex items-center gap-2 text-xs font-bold text-slate-400">
+                        <span>Menos</span>
+                        <div class="flex gap-1">
+                            <div class="w-3 h-3 rounded-sm bg-slate-100"></div>
+                            <div class="w-3 h-3 rounded-sm bg-emerald-200"></div>
+                            <div class="w-3 h-3 rounded-sm bg-emerald-400"></div>
+                            <div class="w-3 h-3 rounded-sm bg-emerald-600"></div>
+                        </div>
+                        <span>Más</span>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto pb-2">
+                    <div id="heatmapContainer" class="flex justify-center">
+                        <!-- Grid injected by JS -->
+                        <div class="animate-pulse flex gap-1">
+                            <div class="w-3 h-3 bg-slate-200 rounded-sm"></div>
+                            <div class="w-3 h-3 bg-slate-200 rounded-sm"></div>
+                            <div class="w-3 h-3 bg-slate-200 rounded-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW: PROFILE (Perfil) -->
+        <div id="profileView" class="hidden animate-fade-in space-y-8">
+            <!-- Header -->
+            <header
+                class="flex justify-between items-center bg-white/70 backdrop-blur-xl p-6 rounded-[2rem] shadow-sm border border-white/50 mb-12">
+                <h2 class="text-3xl font-extrabold text-slate-800">Mi Perfil</h2>
+            </header>
+
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- User Info Card -->
+                <div class="bg-white rounded-[2.5rem] p-8 shadow-xl text-center relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-brand-400 to-brand-600"></div>
+                    <div class="relative z-10 mt-16">
+                        <div class="relative inline-block group">
+                            <div
+                                class="w-32 h-32 rounded-full border-4 border-white shadow-lg overflow-hidden bg-white mx-auto">
+                                <img id="profilePagePic" src="https://ui-avatars.com/api/?name=User"
+                                    class="w-full h-full object-cover">
+                            </div>
+                            <label for="profilePicInput"
+                                class="absolute bottom-0 right-0 bg-slate-800 text-white p-2 rounded-full cursor-pointer hover:bg-slate-700 transition-colors shadow-lg">
+                                <i class="ph-bold ph-camera"></i>
+                            </label>
+                            <input type="file" id="profilePicInput" accept="image/*" class="hidden"
+                                onchange="handleProfilePicUpload(event)">
+                        </div>
+                        <h3 id="profileName" class="text-2xl font-extrabold text-slate-800 mt-4">Usuario</h3>
+                        <p id="profileEmail" class="text-slate-500 font-medium">user@example.com</p>
+                        <p class="text-xs text-slate-400 mt-2 uppercase tracking-wider font-bold">Miembro desde <span
+                                id="profileJoinDate">...</span></p>
+                    </div>
+                </div>
+
+                <!-- Stats Detail -->
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="bg-white rounded-[2.5rem] p-8 shadow-lg">
+                        <h4 class="text-xl font-bold text-slate-800 mb-6">Estadísticas de Juego</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-slate-50 p-6 rounded-2xl text-center border border-slate-100">
+                                <div class="text-yellow-500 text-3xl mb-2"><i class="ph-fill ph-star"></i></div>
+                                <div class="text-3xl font-black text-slate-800" id="profileLevel">1</div>
+                                <div class="text-sm font-bold text-slate-400">Nivel</div>
+                            </div>
+                            <div class="bg-slate-50 p-6 rounded-2xl text-center border border-slate-100">
+                                <div class="text-brand-500 text-3xl mb-2"><i class="ph-fill ph-lightning"></i></div>
+                                <div class="text-3xl font-black text-slate-800" id="profileXP">0</div>
+                                <div class="text-sm font-bold text-slate-400">XP Total</div>
+                            </div>
+                            <div class="bg-slate-50 p-6 rounded-2xl text-center border border-slate-100">
+                                <div class="text-yellow-600 text-3xl mb-2"><i class="ph-fill ph-coins"></i></div>
+                                <div class="text-3xl font-black text-slate-800" id="profileCoins">0</div>
+                                <div class="text-sm font-bold text-slate-400">Monedas</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pet Summary -->
+                    <div
+                        class="bg-brand-50 rounded-[2.5rem] p-8 shadow-lg border border-brand-100 flex items-center gap-6">
+                        <div class="w-24 h-24 bg-brand-200 rounded-full flex items-center justify-center text-4xl">
+                            🐾
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold text-brand-900">Tu Compañero</h4>
+                            <p id="profilePetInfo" class="text-brand-700 mt-1">Gizzmo - Nivel 1</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL: Nuevo Hábito -->
+    <div id="habitModal"
+        class="fixed inset-0 z-50 hidden transition-opacity duration-300 opacity-0 pointer-events-none">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="toggleModal()"></div>
+
+        <!-- Content -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md max-h-[90vh] p-4 transition-all duration-300 scale-95 flex flex-col"
+            id="modalContent">
+            <div class="bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-full overflow-hidden">
+                <div class="p-8 pb-0 flex justify-between items-center shrink-0">
+                    <h3 class="text-2xl font-bold text-slate-800">Nuevo Hábito</h3>
+                    <button onclick="toggleModal()"
+                        class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-colors">
+                        <i class="ph-bold ph-x text-lg"></i>
+                    </button>
+                </div>
+
+                <form id="newHabitForm" class="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">¿Qué quieres
+                            lograr?</label>
+                        <input type="text" id="habitInput" placeholder="Ej: Leer 20 minutos" required
+                            class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-brand-500 focus:bg-white outline-none transition-all text-slate-800 placeholder-slate-400 font-medium text-lg">
+                    </div>
+
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Categoría</label>
+                        <div class="grid grid-cols-3 gap-3" id="categorySelector">
+                            <!-- Salud -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="category" value="salud" class="peer hidden" checked>
+                                <div
+                                    class="h-24 rounded-2xl bg-slate-50 border-2 border-transparent peer-checked:border-green-500 peer-checked:bg-green-50/50 flex flex-col items-center justify-center gap-2 transition-all group-hover:bg-slate-100">
+                                    <i
+                                        class="ph-fill ph-heart-beat text-2xl text-slate-400 peer-checked:text-green-500"></i>
+                                    <span
+                                        class="text-xs font-bold text-slate-500 peer-checked:text-green-700">Salud</span>
+                                </div>
+                            </label>
+                            <!-- Ejercicio -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="category" value="ejercicio" class="peer hidden">
+                                <div
+                                    class="h-24 rounded-2xl bg-slate-50 border-2 border-transparent peer-checked:border-orange-500 peer-checked:bg-orange-50/50 flex flex-col items-center justify-center gap-2 transition-all group-hover:bg-slate-100">
+                                    <i
+                                        class="ph-fill ph-barbell text-2xl text-slate-400 peer-checked:text-orange-500"></i>
+                                    <span
+                                        class="text-xs font-bold text-slate-500 peer-checked:text-orange-700">Ejercicio</span>
+                                </div>
+                            </label>
+                            <!-- Estudio -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="category" value="estudio" class="peer hidden">
+                                <div
+                                    class="h-24 rounded-2xl bg-slate-50 border-2 border-transparent peer-checked:border-blue-500 peer-checked:bg-blue-50/50 flex flex-col items-center justify-center gap-2 transition-all group-hover:bg-slate-100">
+                                    <i
+                                        class="ph-fill ph-book-open text-2xl text-slate-400 peer-checked:text-blue-500"></i>
+                                    <span
+                                        class="text-xs font-bold text-slate-500 peer-checked:text-blue-700">Estudio</span>
+                                </div>
+                            </label>
+                            <!-- Trabajo -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="category" value="trabajo" class="peer hidden">
+                                <div
+                                    class="h-24 rounded-2xl bg-slate-50 border-2 border-transparent peer-checked:border-purple-500 peer-checked:bg-purple-50/50 flex flex-col items-center justify-center gap-2 transition-all group-hover:bg-slate-100">
+                                    <i
+                                        class="ph-fill ph-briefcase text-2xl text-slate-400 peer-checked:text-purple-500"></i>
+                                    <span
+                                        class="text-xs font-bold text-slate-500 peer-checked:text-purple-700">Trabajo</span>
+                                </div>
+                            </label>
+                            <!-- Tarea -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="category" value="tarea" class="peer hidden">
+                                <div
+                                    class="h-24 rounded-2xl bg-slate-50 border-2 border-transparent peer-checked:border-teal-500 peer-checked:bg-teal-50/50 flex flex-col items-center justify-center gap-2 transition-all group-hover:bg-slate-100">
+                                    <i
+                                        class="ph-fill ph-check-square text-2xl text-slate-400 peer-checked:text-teal-500"></i>
+                                    <span
+                                        class="text-xs font-bold text-slate-500 peer-checked:text-teal-700">Tarea</span>
+                                </div>
+                            </label>
+                            <!-- Arte -->
+                            <label class="cursor-pointer group">
+                                <input type="radio" name="category" value="arte" class="peer hidden">
+                                <div
+                                    class="h-24 rounded-2xl bg-slate-50 border-2 border-transparent peer-checked:border-pink-500 peer-checked:bg-pink-50/50 flex flex-col items-center justify-center gap-2 transition-all group-hover:bg-slate-100">
+                                    <i
+                                        class="ph-fill ph-paint-brush text-2xl text-slate-400 peer-checked:text-pink-500"></i>
+                                    <span
+                                        class="text-xs font-bold text-slate-500 peer-checked:text-pink-700">Arte</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Frecuencia / Días -->
+                    <div>
+                        <label
+                            class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Frecuencia</label>
+                        <div class="flex flex-wrap gap-2" id="daysSelector">
+                            <!-- JS generates this or we hardcode -->
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="days" value="0" class="peer hidden" checked>
+                                <span
+                                    class="w-10 h-10 rounded-xl bg-slate-50 border-2 border-transparent flex items-center justify-center text-sm font-bold text-slate-400 peer-checked:bg-brand-500 peer-checked:text-white transition-all">L</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="days" value="1" class="peer hidden" checked>
+                                <span
+                                    class="w-10 h-10 rounded-xl bg-slate-50 border-2 border-transparent flex items-center justify-center text-sm font-bold text-slate-400 peer-checked:bg-brand-500 peer-checked:text-white transition-all">M</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="days" value="2" class="peer hidden" checked>
+                                <span
+                                    class="w-10 h-10 rounded-xl bg-slate-50 border-2 border-transparent flex items-center justify-center text-sm font-bold text-slate-400 peer-checked:bg-brand-500 peer-checked:text-white transition-all">M</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="days" value="3" class="peer hidden" checked>
+                                <span
+                                    class="w-10 h-10 rounded-xl bg-slate-50 border-2 border-transparent flex items-center justify-center text-sm font-bold text-slate-400 peer-checked:bg-brand-500 peer-checked:text-white transition-all">J</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="days" value="4" class="peer hidden" checked>
+                                <span
+                                    class="w-10 h-10 rounded-xl bg-slate-50 border-2 border-transparent flex items-center justify-center text-sm font-bold text-slate-400 peer-checked:bg-brand-500 peer-checked:text-white transition-all">V</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="days" value="5" class="peer hidden" checked>
+                                <span
+                                    class="w-10 h-10 rounded-xl bg-slate-50 border-2 border-transparent flex items-center justify-center text-sm font-bold text-slate-400 peer-checked:bg-brand-500 peer-checked:text-white transition-all">S</span>
+                            </label>
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="days" value="6" class="peer hidden" checked>
+                                <span
+                                    class="w-10 h-10 rounded-xl bg-slate-50 border-2 border-transparent flex items-center justify-center text-sm font-bold text-slate-400 peer-checked:bg-brand-500 peer-checked:text-white transition-all">D</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Steps Configuration -->
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Pasos
+                                (Checkpoints)</label>
+                            <span class="text-xs font-bold text-brand-600 bg-brand-50 px-2 py-1 rounded-full"
+                                id="stepsValueDisplay">1 paso</span>
+                        </div>
+                        <input type="range" id="stepsInput" min="1" max="10" value="1"
+                            class="w-full accent-brand-500 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer">
+                        <p class="text-xs text-slate-400 mt-2">Divide tu hábito en partes pequeñas (ej. beber 8 vasos de
+                            agua)</p>
+                    </div>
+
+                    <div class="pt-4 flex gap-3">
+                        <button type="button" onclick="toggleModal()"
+                            class="flex-1 py-4 rounded-2xl text-slate-500 font-bold hover:bg-slate-50 transition-colors">Cancelar</button>
+                        <button type="submit"
+                            class="flex-[2] py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all transform active:scale-95">Crear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Adoptar Mascota -->
+    <div id="adoptionModal"
+        class="fixed inset-0 z-50 hidden transition-opacity duration-300 opacity-0 pointer-events-none">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-slate-900/80 backdrop-blur-md" onclick="closeAdoptionModal()"></div>
+
+        <!-- Content -->
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl p-4 transition-all duration-300 scale-95"
+            id="adoptionModalContent">
+            <div class="bg-white rounded-[2.5rem] shadow-2xl overflow-hidden relative">
+
+                <!-- Radiant Background -->
+                <div class="absolute inset-0 z-0 bg-gradient-to-b from-brand-50 to-white"></div>
+
+                <div class="relative z-10 grid grid-cols-1 md:grid-cols-2">
+
+                    <!-- Left: Pet Preview -->
+                    <div class="p-10 flex flex-col items-center justify-center bg-brand-100/30">
+                        <div class="w-64 h-64 relative">
+                            <div class="absolute inset-0 bg-brand-200 rounded-full blur-3xl opacity-50 animate-pulse">
+                            </div>
+                            <!-- Gizzmo Idle Image -->
+                            <img src="assets/mascotas/Gizzmo/Idle.jpg" alt="Gizzmo"
+                                class="relative z-10 animate-float w-full h-full object-contain drop-shadow-2xl">
+                        </div>
+                        <h4 class="mt-6 text-xl font-bold text-brand-900">Gizzmo</h4>
+                        <p class="text-sm text-brand-600 font-medium bg-brand-100 px-3 py-1 rounded-full mt-2">Tu
+                            Compañero Único</p>
+                    </div>
+
+                    <!-- Right: Form -->
+                    <div class="p-10 flex flex-col justify-center">
+                        <div class="mb-6">
+                            <h3 class="text-3xl font-extrabold text-slate-800 mb-2">¡Compañero Encontrado!</h3>
+                            <p class="text-slate-500">Gizzmo está listo para acompañarte en tu viaje.</p>
+                        </div>
+
+                        <form id="adoptionForm" class="space-y-6">
+                            <input type="hidden" name="especie" value="gizzmo">
+                            <div>
+                                <label
+                                    class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Ponle
+                                    un nombre</label>
+                                <input type="text" id="petNameInput" placeholder="Ej: Sparky" required maxlength="20"
+                                    class="w-full px-5 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-brand-500 focus:bg-white outline-none transition-all text-slate-800 placeholder-slate-400 font-bold text-lg">
+                            </div>
+
+                            <button type="submit"
+                                class="w-full py-4 rounded-2xl bg-brand-600 text-white font-bold hover:bg-brand-700 shadow-xl shadow-brand-500/30 transition-all transform active:scale-95 flex items-center justify-center gap-2">
+                                <span>Adoptar ahora</span>
+                                <i class="ph-bold ph-heart"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="js/dashboard.js"></script>
+</body>
+
+</html>
