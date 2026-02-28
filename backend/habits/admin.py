@@ -7,17 +7,17 @@ class HabitAdmin(admin.ModelAdmin):
     """
     Configuración del admin para Habit.
     """
-    list_display = ('nombre', 'user', 'frecuencia', 'activo', 'total_completados', 'racha_actual', 'fecha_creacion')
-    list_filter = ('frecuencia', 'activo', 'fecha_creacion')
+    list_display = ('nombre', 'user', 'categoria', 'dias_semana', 'total_pasos', 'activo', 'total_completados', 'racha_actual', 'fecha_creacion')
+    list_filter = ('categoria', 'activo', 'fecha_creacion')
     search_fields = ('nombre', 'user__username', 'descripcion')
     readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('user', 'nombre', 'descripcion')
+            'fields': ('user', 'nombre', 'descripcion', 'categoria')
         }),
         ('Configuración', {
-            'fields': ('frecuencia', 'meta_semanal', 'activo')
+            'fields': ('dias_semana', 'total_pasos', 'activo')
         }),
         ('Información del Sistema', {
             'fields': ('fecha_creacion', 'fecha_actualizacion'),
@@ -47,7 +47,7 @@ class HabitLogAdmin(admin.ModelAdmin):
     """
     Configuración del admin para HabitLog.
     """
-    list_display = ('habit', 'fecha_cumplimiento', 'estado', 'fecha_registro')
+    list_display = ('habit', 'fecha_cumplimiento', 'pasos_completados', 'estado', 'fecha_registro')
     list_filter = ('estado', 'fecha_cumplimiento', 'fecha_registro')
     search_fields = ('habit__nombre', 'habit__user__username', 'notas')
     readonly_fields = ('fecha_registro',)
@@ -55,7 +55,7 @@ class HabitLogAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Información', {
-            'fields': ('habit', 'fecha_cumplimiento', 'estado')
+            'fields': ('habit', 'fecha_cumplimiento', 'pasos_completados', 'estado')
         }),
         ('Detalles', {
             'fields': ('notas',)

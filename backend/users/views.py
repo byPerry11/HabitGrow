@@ -10,15 +10,16 @@ from .forms import RegistroUsuarioForm
 from habitgrow.permissions import IsOwner
 
 
-class ProfileViewSet(viewsets.ReadOnlyModelViewSet):
+class ProfileViewSet(viewsets.ModelViewSet):
     """
-    ViewSet de solo lectura para Profile.
+    ViewSet para Profile.
     
-    Los usuarios solo pueden ver su propio perfil.
-    El XP y nivel se actualizan automáticamente mediante signals.
+    Los usuarios pueden ver y actualizar su propio perfil (foto, etc).
+    El XP y nivel se gestionan automáticamente.
     
     Endpoints:
     - GET /api/v1/profile/me/ - Perfil del usuario autenticado
+    - PATCH /api/v1/profile/{id}/ - Actualizar perfil (ej. foto)
     """
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwner]
@@ -29,15 +30,25 @@ class ProfileViewSet(viewsets.ReadOnlyModelViewSet):
         """
         return Profile.objects.filter(user=self.request.user)
     
-    @action(detail=False, methods=['get'])
+    @action(detail=False, methods=['get', 'patch'])
     def me(self, request):
         """
-        Endpoint personalizado para obtener el perfil del usuario autenticado.
+        Endpoint personalizado para obtener y actualizar el perfil del usuario autenticado.
         
-        GET /api/v1/profile/me/
+        GET /api/v1/profile/me/ - Obtener perfil
+        PATCH /api/v1/profile/me/ - Actualizar perfil (ej. subir foto)
         """
         try:
             profile = request.user.profile
+            
+            if request.method == 'PATCH':
+                # Actualizar perfil (ej. imagen de perfil)
+                serializer = self.get_serializer(profile, data=request.data, partial=True)
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+                return Response(serializer.data)
+            
+            # GET: retornar perfil
             serializer = self.get_serializer(profile)
             return Response(serializer.data)
         except Profile.DoesNotExist:

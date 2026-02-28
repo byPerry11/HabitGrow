@@ -8,12 +8,13 @@ class HabitSerializer(serializers.ModelSerializer):
     Serializer para el modelo Habit.
     Incluye estadísticas calculadas.
     """
-    frecuencia_display = serializers.CharField(source='get_frecuencia_display', read_only=True)
     username = serializers.CharField(source='user.username', read_only=True)
     
     # Estadísticas
     racha_actual = serializers.SerializerMethodField()
     total_completados = serializers.SerializerMethodField()
+    completado_hoy = serializers.SerializerMethodField()
+    pasos_completados_hoy = serializers.SerializerMethodField()
     
     class Meta:
         model = Habit
@@ -23,14 +24,16 @@ class HabitSerializer(serializers.ModelSerializer):
             'username',
             'nombre',
             'descripcion',
-            'frecuencia',
-            'frecuencia_display',
-            'meta_semanal',
             'activo',
             'fecha_creacion',
             'fecha_actualizacion',
             'racha_actual',
-            'total_completados'
+            'total_completados',
+            'completado_hoy',
+            'categoria',
+            'dias_semana',
+            'total_pasos',
+            'pasos_completados_hoy'
         ]
         read_only_fields = ['id', 'user', 'fecha_creacion', 'fecha_actualizacion']
     
@@ -41,6 +44,18 @@ class HabitSerializer(serializers.ModelSerializer):
     def get_total_completados(self, obj):
         """Obtiene el total de veces completado."""
         return obj.get_total_completados()
+    
+    def get_completado_hoy(self, obj):
+        """Verifica si el hábito se completó hoy."""
+        return obj.logs.filter(
+            fecha_cumplimiento=timezone.now().date(),
+            estado=HabitLog.ESTADO_CUMPLIDO
+        ).exists()
+
+    def get_pasos_completados_hoy(self, obj):
+        """Obtiene el número de pasos completados hoy."""
+        log = obj.logs.filter(fecha_cumplimiento=timezone.now().date()).first()
+        return log.pasos_completados if log else 0
 
 
 class HabitCreateSerializer(serializers.ModelSerializer):
@@ -49,7 +64,8 @@ class HabitCreateSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Habit
-        fields = ['nombre', 'descripcion', 'frecuencia', 'meta_semanal', 'activo']
+        fields = ['id', 'nombre', 'descripcion', 'dias_semana', 'total_pasos', 'activo', 'categoria']
+        read_only_fields = ['id']
     
     def create(self, validated_data):
         """
@@ -75,6 +91,7 @@ class HabitLogSerializer(serializers.ModelSerializer):
             'fecha_cumplimiento',
             'estado',
             'estado_display',
+            'pasos_completados',
             'notas',
             'fecha_registro'
         ]
@@ -109,7 +126,7 @@ class HabitLogCreateSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = HabitLog
-        fields = ['habit', 'fecha_cumplimiento', 'estado', 'notas']
+        fields = ['habit', 'fecha_cumplimiento', 'estado', 'pasos_completados', 'notas']
     
     def validate(self, data):
         """

@@ -10,11 +10,13 @@ class Mascota(models.Model):
     Refleja el estado de constancia del usuario mediante su salud.
     """
     
+    # Constantes para los diferentes estados de salud de la mascota
     ESTADO_OPTIMO = 'optimo'
     ESTADO_REGULAR = 'regular'
     ESTADO_MAL = 'mal'
     ESTADO_MARCHITO = 'marchito'
     
+    # Opciones de estado para el campo choices
     ESTADOS_SALUD = [
         (ESTADO_OPTIMO, 'Óptimo'),
         (ESTADO_REGULAR, 'Regular'),
@@ -22,11 +24,30 @@ class Mascota(models.Model):
         (ESTADO_MARCHITO, 'Marchito'),
     ]
     
+    # Especies disponibles
+    ESPECIE_GIZZMO = 'gizzmo'
+    ESPECIE_BULBASAUR = 'bulbasaur'
+    ESPECIE_CHARMANDER = 'charmander'
+    ESPECIE_GASTLY = 'gastly'
+
+    ESPECIES_CHOICES = [
+        (ESPECIE_GIZZMO, 'Gizzmo'),
+        (ESPECIE_BULBASAUR, 'Bulbasaur'),
+        (ESPECIE_CHARMANDER, 'Charmander'),
+        (ESPECIE_GASTLY, 'Gastly'),
+    ]
+
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name='mascota',
         verbose_name='Usuario'
+    )
+    especie = models.CharField(
+        max_length=20,
+        choices=ESPECIES_CHOICES,
+        default=ESPECIE_GIZZMO,
+        verbose_name='Especie'
     )
     nombre = models.CharField(
         max_length=100,
@@ -48,10 +69,22 @@ class Mascota(models.Model):
         default=ESTADO_OPTIMO,
         verbose_name='Estado de Salud'
     )
+    # Evolución visual (1-5 etapas según nivel)
     nivel_evolucion = models.IntegerField(
         default=1,
         verbose_name='Nivel de Evolución',
         help_text='Etapa visual de crecimiento de la planta'
+    )
+    # Sistema de XP y Nivel (refactorizado desde Profile)
+    total_xp = models.IntegerField(
+        default=0,
+        verbose_name='Experiencia Total',
+        help_text='Puntos de experiencia acumulados de la mascota'
+    )
+    nivel = models.IntegerField(
+        default=1,
+        verbose_name='Nivel',
+        help_text='Nivel actual de la mascota'
     )
     ultimo_chequeo = models.DateTimeField(
         auto_now=True,
@@ -155,28 +188,55 @@ class Mascota(models.Model):
     
     def _update_nivel_evolucion(self) -> None:
         """
-        Actualiza el nivel de evolución visual basado en el nivel del usuario.
+        Actualiza el nivel de evolución visual basado en el nivel de la mascota.
         
         Niveles:
-        - 1-5: Semilla/Brote (nivel 1)
-        - 6-15: Planta Joven (nivel 2)
-        - 16-30: Planta Madura (nivel 3)
-        - 31-50: Planta Floreciente (nivel 4)
-        - 51+: Árbol Majestuoso (nivel 5)
+        - 1-4: Bebé (nivel 1)
+        - 5-15: Joven (nivel 2)
+        - 16-30: Adulto (nivel 3)
+        - 31-50: Maduro (nivel 4)
+        - 51+: Legendario (nivel 5)
         """
-        nivel_usuario = self.user.profile.nivel
-        
-        if nivel_usuario <= 5:
+        if self.nivel < 5:
             self.nivel_evolucion = 1
-        elif nivel_usuario <= 15:
+        elif self.nivel <= 15:
             self.nivel_evolucion = 2
-        elif nivel_usuario <= 30:
+        elif self.nivel <= 30:
             self.nivel_evolucion = 3
-        elif nivel_usuario <= 50:
+        elif self.nivel <= 50:
             self.nivel_evolucion = 4
         else:
             self.nivel_evolucion = 5
     
+    # --- SISTEMA DE XP --- #
+    def add_xp(self, amount: int) -> None:
+        """
+        Añade XP a la mascota y actualiza el nivel si es necesario.
+        Se llama automáticamente al completar hábitos (+10 XP).
+        
+        Lógica de niveles:
+        - Nivel 1: 0-99 XP
+        - Nivel 2: 100-299 XP
+        - Nivel 3: 300-599 XP
+        - Nivel N: 100 * N + 50 * (N - 1) XP
+        """
+        self.total_xp += amount
+        
+        # Cálculo de nivel basado en XP
+        # Fórmula: XP necesario = 100 * nivel + 50 * (nivel - 1)
+        xp_for_next_level = 100 * self.nivel + 50 * (self.nivel - 1)
+        
+        # Subir de nivel si hay XP suficiente
+        while self.total_xp >= xp_for_next_level and self.nivel < 100:
+            self.nivel += 1
+            xp_for_next_level = 100 * self.nivel + 50 * (self.nivel - 1)
+        
+        # Actualizar nivel de evolución visual basado en nuevo nivel
+        self._update_nivel_evolucion()
+        
+        self.save()
+    
+    # --- SISTEMA DE CURACIÓN --- #
     def heal(self, amount: int) -> None:
         """
         Cura la mascota (se llama al completar hábitos).
@@ -222,3 +282,31 @@ class Mascota(models.Model):
         Devuelve el porcentaje de salud (0-100).
         """
         return max(0, min(100, self.puntos_vida))
+    
+    # --- CÁLCULOS DE XP Y PROGRESO --- #
+    @property
+    def xp_para_siguiente_nivel(self) -> int:
+        """
+        Calcula el XP total necesario para alcanzar el siguiente nivel.
+        """
+        return 100 * self.nivel + 50 * (self.nivel - 1)
+    
+    @property
+    def progreso_nivel(self) -> float:
+        """
+        Calcula el progreso hacia el siguiente nivel como porcentaje (0-100).
+        Usado para la barra de XP en el frontend.
+        """
+        if self.nivel == 1:
+            xp_nivel_actual = 0
+        else:
+            xp_nivel_actual = 100 * (self.nivel - 1) + 50 * (self.nivel - 2)
+        
+        xp_necesario_para_nivel = self.xp_para_siguiente_nivel - xp_nivel_actual
+        xp_progreso = self.total_xp - xp_nivel_actual
+        
+        if xp_necesario_para_nivel == 0:
+            return 100.0
+        
+        progreso = (xp_progreso / xp_necesario_para_nivel) * 100
+        return min(100.0, max(0.0, progreso))

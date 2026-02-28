@@ -58,44 +58,80 @@ class MascotaViewSet(viewsets.ModelViewSet):
         POST /api/v1/mascota/adoptar/
         Body: { "nombre": "Plantita Feliz" }
         """
-        # Verificar que no tenga mascota ya
-        if hasattr(request.user, 'mascota'):
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        logger.info(f"[ADOPTAR] Usuario {request.user.username} intentando adoptar mascota")
+        logger.info(f"[ADOPTAR] Payload recibido: {request.data}")
+        
+        try:
+            # Verificar que no tenga mascota ya
+            if hasattr(request.user, 'mascota'):
+                logger.warning(f"[ADOPTAR] Usuario {request.user.username} ya tiene mascota: {request.user.mascota.nombre}")
+                return Response(
+                    {
+                        'error': 'Ya tienes una mascota.',
+                        'mascota': self.get_serializer(request.user.mascota).data
+                    },
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            nombre = request.data.get('nombre', '').strip()
+            especie = request.data.get('especie', '').strip().lower()
+            
+            # Validar especie
+            especies_validas = [choice[0] for choice in Mascota.ESPECIES_CHOICES]
+            if especie and especie not in especies_validas:
+                logger.warning(f"[ADOPTAR] Especie inválida: {especie}")
+                return Response(
+                    {'error': f'La especie "{especie}" no es válida.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if not especie:
+                especie = Mascota.ESPECIE_GIZZMO # Default
+            
+            if not nombre:
+                logger.warning(f"[ADOPTAR] Nombre vacío proporcionado")
+                return Response(
+                    {'error': 'Debes proporcionar un nombre para tu mascota.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            if len(nombre) > 100:
+                logger.warning(f"[ADOPTAR] Nombre demasiado largo: {len(nombre)} caracteres")
+                return Response(
+                    {'error': 'El nombre no puede tener más de 100 caracteres.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Crear la mascota
+            logger.info(f"[ADOPTAR] Creando mascota: {nombre} ({especie})")
+            mascota = Mascota.objects.create(
+                user=request.user,
+                nombre=nombre,
+                especie=especie
+            )
+            logger.info(f"[ADOPTAR] Mascota creada exitosamente: ID={mascota.id}")
+            
+            serializer = self.get_serializer(mascota)
             return Response(
                 {
-                    'error': 'Ya tienes una mascota.',
-                    'mascota': self.get_serializer(request.user.mascota).data
+                    'mensaje': f'¡Felicidades! Has adoptado a {nombre} 🌱',
+                    'mascota': serializer.data
                 },
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_201_CREATED
             )
-        
-        nombre = request.data.get('nombre', '').strip()
-        
-        if not nombre:
+        except Exception as e:
+            logger.error(f"[ADOPTAR] Error inesperado: {type(e).__name__}: {str(e)}")
+            logger.exception("[ADOPTAR] Stack trace completo:")
             return Response(
-                {'error': 'Debes proporcionar un nombre para tu mascota.'},
-                status=status.HTTP_400_BAD_REQUEST
+                {
+                    'error': 'Error interno del servidor al crear la mascota.',
+                    'detalle': str(e) if request.user.is_staff else 'Contacta al administrador.'
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        
-        if len(nombre) > 100:
-            return Response(
-                {'error': 'El nombre no puede tener más de 100 caracteres.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        
-        # Crear la mascota
-        mascota = Mascota.objects.create(
-            user=request.user,
-            nombre=nombre
-        )
-        
-        serializer = self.get_serializer(mascota)
-        return Response(
-            {
-                'mensaje': f'¡Felicidades! Has adoptado a {nombre} 🌱',
-                'mascota': serializer.data
-            },
-            status=status.HTTP_201_CREATED
-        )
     
     @action(detail=True, methods=['post'])
     def heal(self, request, pk=None):

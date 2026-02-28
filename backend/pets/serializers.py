@@ -1,19 +1,23 @@
 from rest_framework import serializers
 from .models import Mascota
 
-
+# Serializer para el modelo Mascota con campos calculados
 class MascotaSerializer(serializers.ModelSerializer):
     """
     Serializer para el modelo Mascota.
     Incluye información calculada sobre el estado.
     """
-    estado_salud_display = serializers.CharField(source='get_estado_salud_display', read_only=True)
-    username = serializers.CharField(source='user.username', read_only=True)
+    estado_salud_display = serializers.CharField(source='get_estado_salud_display', read_only=True)  # Estado legible
+    username = serializers.CharField(source='user.username', read_only=True)  # Nombre del dueño
     
     # Campos visuales para el frontend
-    emoji = serializers.SerializerMethodField()
-    color = serializers.SerializerMethodField()
-    porcentaje_salud = serializers.SerializerMethodField()
+    emoji = serializers.SerializerMethodField()  # Emoji según estado de salud
+    color = serializers.SerializerMethodField()  # Color hex según estado  
+    porcentaje_salud = serializers.SerializerMethodField()  # HP como porcentaje
+    
+    # --- CAMPOS DE XP Y NIVEL (refactorizados desde Profile) ---
+    xp_para_siguiente_nivel = serializers.SerializerMethodField()
+    progreso_nivel = serializers.SerializerMethodField()
     
     class Meta:
         model = Mascota
@@ -21,12 +25,17 @@ class MascotaSerializer(serializers.ModelSerializer):
             'id',
             'user',
             'username',
+            'especie',
             'nombre',
             'fecha_creacion',
             'puntos_vida',
             'estado_salud',
             'estado_salud_display',
             'nivel_evolucion',
+            'total_xp',
+            'nivel',
+            'xp_para_siguiente_nivel',
+            'progreso_nivel',
             'ultimo_chequeo',
             'emoji',
             'color',
@@ -38,6 +47,8 @@ class MascotaSerializer(serializers.ModelSerializer):
             'puntos_vida',
             'estado_salud',
             'nivel_evolucion',
+            'total_xp',
+            'nivel',
             'ultimo_chequeo',
             'fecha_creacion'
         ]
@@ -65,6 +76,14 @@ class MascotaSerializer(serializers.ModelSerializer):
     def get_porcentaje_salud(self, obj):
         """Retorna el porcentaje de salud (0-100)."""
         return obj.puntos_vida
+    
+    def get_xp_para_siguiente_nivel(self, obj):
+        """Retorna el XP necesario para el siguiente nivel."""
+        return obj.xp_para_siguiente_nivel
+    
+    def get_progreso_nivel(self, obj):
+        """Retorna el progreso hacia el siguiente nivel (0-100)."""
+        return obj.progreso_nivel
 
 
 class HealthUpdateSerializer(serializers.Serializer):

@@ -32,7 +32,7 @@ class HabitViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [permissions.IsAuthenticated, IsOwner]
     filter_backends = [DjangoFilterBackend, filters.OrderingFilter]
-    filterset_fields = ['frecuencia', 'activo']
+    filterset_fields = ['activo', 'categoria']
     ordering_fields = ['fecha_creacion', 'nombre']
     ordering = ['-fecha_creacion']
     
@@ -52,6 +52,23 @@ class HabitViewSet(viewsets.ModelViewSet):
             return HabitWithLogsSerializer
         return HabitSerializer
     
+    def create(self, request, *args, **kwargs):
+        """
+        Crea un hábito y retorna la representación completa.
+        """
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        
+        # Usar el serializer completo para la respuesta
+        headers = self.get_success_headers(serializer.data)
+        
+        # Re-serializamos con el serializer de lectura para incluir campos calculados
+        instance = serializer.instance
+        read_serializer = HabitSerializer(instance, context={'request': request})
+        
+        return Response(read_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     @action(detail=False, methods=['get'])
     def activos(self, request):
         """
@@ -77,6 +94,80 @@ class HabitViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(habit)
         return Response({
             'mensaje': f'Hábito {"activado" if habit.activo else "desactivado"}.',
+            'habit': serializer.data
+        })
+    
+    @action(detail=True, methods=['post'])
+    def toggle_completado_hoy(self, request, pk=None):
+        """
+        Marca/desmarca el hábito como completado hoy.
+        
+        POST /api/v1/habits/{id}/toggle_completado_hoy/
+        """
+        habit = self.get_object()
+        today = timezone.now().date()
+        
+        # Buscar si ya existe un log para hoy
+        log = habit.logs.filter(fecha_cumplimiento=today).first()
+        
+        if log:
+            # BLOQUEO: Si ya está cumplido, no permitir cambios/reinicio
+            if log.estado == HabitLog.ESTADO_CUMPLIDO:
+                return Response(
+                    {'error': 'Este hábito ya se completó hoy y no se puede reiniciar.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Si existe con pasos, incrementamos
+            # Si ya está completado (pasos >= total), reiniciamos/borramos (toggle off logic)
+            # Ciclo: 0 -> 1 -> 2 ... -> Total -> 0
+            
+            log.pasos_completados += 1
+            
+            if log.pasos_completados > habit.total_pasos:
+                # Excedió el total, borramos el log (reset a 0)
+                log.delete()
+                completado = False
+                mensaje = "Progreso reiniciado."
+            else:
+                # Actualizamos estado
+                if log.pasos_completados >= habit.total_pasos:
+                    log.estado = HabitLog.ESTADO_CUMPLIDO
+                    mensaje = "¡Hábito completado por hoy!"
+                    completado = True
+                else:
+                    log.estado = HabitLog.ESTADO_NO_CUMPLIDO
+                    mensaje = f"Paso {log.pasos_completados}/{habit.total_pasos} completado."
+                    completado = False
+                log.save()
+                
+        else:
+            # Si no existe, lo creamos con 1 paso
+            pasos = 1
+            estado = HabitLog.ESTADO_CUMPLIDO if pasos >= habit.total_pasos else HabitLog.ESTADO_NO_CUMPLIDO
+            
+            HabitLog.objects.create(
+                habit=habit,
+                fecha_cumplimiento=today,
+                pasos_completados=pasos,
+                estado=estado
+            )
+            
+            if estado == HabitLog.ESTADO_CUMPLIDO:
+                mensaje = "¡Hábito completado por hoy!"
+                completado = True
+            else:
+                mensaje = f"Paso {pasos}/{habit.total_pasos} completado."
+                completado = False
+        
+        # Recargar el hábito para obtener datos actualizados (racha, etc)
+        # Forzamos la actualización de los campos calculados
+        habit.refresh_from_db()
+        serializer = self.get_serializer(habit)
+        
+        return Response({
+            'mensaje': mensaje,
+            'completado_hoy': completado,
             'habit': serializer.data
         })
 
@@ -152,3 +243,36 @@ class HabitLogViewSet(viewsets.ModelViewSet):
             'total_logs': queryset.count(),
             'logs': serializer.data
         })
+    
+    @action(detail=False, methods=['get'])
+    def heatmap(self, request):
+        """
+        Retorna la cantidad de hábitos completados por día en el último año.
+        Formato para gráfico de calor (similar a GitHub).
+        
+        GET /api/v1/habit-logs/heatmap/
+        """
+        from django.db.models import Count
+        from django.db.models.functions import TruncDate
+        
+        # Último año (o rango deseado)
+        end_date = timezone.now().date()
+        start_date = end_date - timedelta(days=365)
+        
+        # Query: Agrupar por fecha y contar logs cumplidos
+        # Solo logs cumplidos
+        queryset = self.get_queryset().filter(
+            fecha_cumplimiento__gte=start_date,
+            fecha_cumplimiento__lte=end_date,
+            estado=HabitLog.ESTADO_CUMPLIDO
+        ).values('fecha_cumplimiento').annotate(
+            count=Count('id')
+        )
+        
+        # Transformar a diccionario { "YYYY-MM-DD": count }
+        data = {}
+        for item in queryset:
+            date_str = item['fecha_cumplimiento'].isoformat()
+            data[date_str] = item['count']
+            
+        return Response(data)

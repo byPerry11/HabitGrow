@@ -25,11 +25,22 @@ class Profile(models.Model):
         verbose_name='Nivel',
         help_text='Nivel actual del usuario'
     )
+    coins = models.IntegerField(
+        default=0,
+        verbose_name='Monedas',
+        help_text='Monedas virtuales para comprar accesorios'
+    )
     accesorios_equipados = models.JSONField(
         default=dict,
         blank=True,
         verbose_name='Accesorios Equipados',
         help_text='Accesorios equipados en la mascota (JSON)'
+    )
+    profile_picture = models.ImageField(
+        upload_to='profile_pics/',
+        null=True,
+        blank=True,
+        verbose_name='Foto de Perfil'
     )
     fecha_creacion = models.DateTimeField(
         auto_now_add=True,
@@ -38,6 +49,12 @@ class Profile(models.Model):
     fecha_actualizacion = models.DateTimeField(
         auto_now=True,
         verbose_name='Última Actualización'
+    )
+    last_daily_reward_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name='Última Recompensa Diaria',
+        help_text='Fecha de la última vez que se otorgó la recompensa diaria de monedas'
     )
 
     class Meta:

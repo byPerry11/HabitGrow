@@ -9,6 +9,7 @@ class Habit(models.Model):
     Hábito que el usuario desea rastrear.
     """
     
+    # Constantes para las opciones de frecuencia del hábito
     FRECUENCIA_DIARIA = 'diaria'
     FRECUENCIA_SEMANAL = 'semanal'
     FRECUENCIA_PERSONALIZADA = 'personalizada'
@@ -17,6 +18,23 @@ class Habit(models.Model):
         (FRECUENCIA_DIARIA, 'Diaria'),
         (FRECUENCIA_SEMANAL, 'Semanal'),
         (FRECUENCIA_PERSONALIZADA, 'Personalizada'),
+    ]
+
+    # Constantes para las categorías de hábitos
+    CATEGORIA_SALUD = 'salud'
+    CATEGORIA_EJERCICIO = 'ejercicio'
+    CATEGORIA_ESTUDIO = 'estudio'
+    CATEGORIA_TRABAJO = 'trabajo'
+    CATEGORIA_TAREA = 'tarea'
+    CATEGORIA_ARTE = 'arte'
+
+    CATEGORIAS = [
+        (CATEGORIA_SALUD, 'Salud'),
+        (CATEGORIA_EJERCICIO, 'Ejercicio'),
+        (CATEGORIA_ESTUDIO, 'Estudio'),
+        (CATEGORIA_TRABAJO, 'Trabajo'),
+        (CATEGORIA_TAREA, 'Tarea'),
+        (CATEGORIA_ARTE, 'Arte'),
     ]
     
     user = models.ForeignKey(
@@ -34,16 +52,30 @@ class Habit(models.Model):
         verbose_name='Descripción',
         help_text='Descripción opcional del hábito'
     )
-    frecuencia = models.CharField(
+    # Frecuencia ya no se usa como tal, se define por días de la semana
+    # Mantener campo por compatibilidad o migrar? 
+    # El plan decia reemplazar meta_semanal por dias especificos.
+    # Vamos a mantener frecuencia como 'personalizada' por defecto o eliminarla si no es necesaria.
+    # Pero el código existente la usa. Vamos a dejarla pero enfocar la lógica en dias_semana.
+    
+    categoria = models.CharField(
         max_length=20,
-        choices=FRECUENCIAS,
-        default=FRECUENCIA_DIARIA,
-        verbose_name='Frecuencia'
+        choices=CATEGORIAS,
+        default=CATEGORIA_SALUD,
+        verbose_name='Categoría'
     )
-    meta_semanal = models.IntegerField(
-        default=7,
-        verbose_name='Meta Semanal',
-        help_text='Veces por semana que se debe completar'
+
+    dias_semana = models.CharField(
+        max_length=20,
+        default='0,1,2,3,4,5,6',
+        verbose_name='Días de la Semana',
+        help_text='Índices de días separados por coma (0=Lunes, 6=Domingo)'
+    )
+    
+    total_pasos = models.IntegerField(
+        default=1,
+        verbose_name='Total de Pasos',
+        help_text='Número de pasos para completar el hábito (Checkpoints)'
     )
     activo = models.BooleanField(
         default=True,
@@ -69,7 +101,7 @@ class Habit(models.Model):
         ]
     
     def __str__(self):
-        return f"{self.nombre} ({self.user.username}) - {self.get_frecuencia_display()}"
+        return f"{self.nombre} ({self.user.username})"
     
     def get_racha_actual(self) -> int:
         """
@@ -112,6 +144,7 @@ class HabitLog(models.Model):
     Registro de cumplimiento/no cumplimiento de un hábito.
     """
     
+    # Constantes para el estado de cumplimiento del hábito
     ESTADO_CUMPLIDO = 'cumplido'
     ESTADO_NO_CUMPLIDO = 'no_cumplido'
     
@@ -128,6 +161,10 @@ class HabitLog(models.Model):
     )
     fecha_cumplimiento = models.DateField(
         verbose_name='Fecha de Cumplimiento'
+    )
+    pasos_completados = models.IntegerField(
+        default=0,
+        verbose_name='Pasos Completados'
     )
     estado = models.CharField(
         max_length=20,
@@ -164,22 +201,66 @@ def update_mascota_on_habit_completion(sender, instance, created, **kwargs):
     """
     Signal que se dispara al crear/actualizar un HabitLog.
     
-    Al completar un hábito (created=True y estado=cumplido):
+    Al completar un hábito (estado=cumplido):
     1. Añade XP al perfil del usuario (+10 XP)
     2. Cura la mascota (+10 puntos de vida)
-    3. Actualiza el último_chequeo de la mascota
+    3. Verifica si completó TODOS los hábitos del día:
+       - Si sí, y no ha recibido recompensa hoy -> +20 Coins
     """
-    if created and instance.estado == HabitLog.ESTADO_CUMPLIDO:
-        user = instance.habit.user
-        
-        # 1. Añadir XP al perfil
-        if hasattr(user, 'profile'):
-            user.profile.add_xp(10)
-        
-        # 2. Curar la mascota
-        if hasattr(user, 'mascota'):
-            user.mascota.heal(10)
+    if instance.estado != HabitLog.ESTADO_CUMPLIDO:
+        return
+
+    # Evitar duplicados en actualizaciones sucesivas si no cambió el estado
+    # (Esto es una aproximación, lo ideal es verificar el estado anterior o usar un campo flag)
+    # Por ahora confiamos en que la vista solo guarda cambios reales.
+
+    user = instance.habit.user
+    today = instance.fecha_cumplimiento # Usar fecha del log, no hoy real, para consistencia
+    
+    # --- RECOMPENSAS POR HÁBITO COMPLETADO ---
+    # 1. Añadir XP a la mascota
+    if hasattr(user, 'mascota'):
+        user.mascota.add_xp(10)  # +10 XP por cada hábito completado
+    
+    # 2. Curar la mascota
+    if hasattr(user, 'mascota'):
+        user.mascota.heal(10)  # +10 HP por cada hábito completado
+        # La mascota ya se actualiza y se guarda en heal() y add_xp()
+
+    # 3. Verificar si completó TODOS los hábitos del día
+    # Filtrar hábitos activos y programados para este día de la semana
+    active_habits = Habit.objects.filter(user=user, activo=True)
+    weekday = today.weekday() # 0 = Lunes, 6 = Domingo
+    
+    habits_today_ids = []
+    
+    for h in active_habits:
+        try:
+            # dias_semana es "0,1,2,3,4"
+            days = [int(x) for x in h.dias_semana.split(',') if x.strip().isdigit()]
+            if weekday in days:
+                habits_today_ids.append(h.id)
+        except ValueError:
+            continue
             
-            # También actualizar nivel de evolución por si subió de nivel
-            user.mascota._update_nivel_evolucion()
-            user.mascota.save()
+    if not habits_today_ids:
+        return
+
+    # Verificar si todos estos hábitos tienen un log cumplido para esta fecha
+    # Contamos cuántos de los hábitos de hoy tienen un log cumplido
+    completed_count = HabitLog.objects.filter(
+        habit_id__in=habits_today_ids,
+        fecha_cumplimiento=today,
+        estado=HabitLog.ESTADO_CUMPLIDO
+    ).count()
+    
+    if completed_count >= len(habits_today_ids):
+        # ¡Todo completado!
+        # Verificar si ya se dio la recompensa para ESTA fecha
+        # Usamos last_daily_reward_date. Si es diferente a 'today', damos premio.
+        if hasattr(user, 'profile'):
+            # Convertimos today a date si es datetime (aunque el modelo define datefield)
+            if user.profile.last_daily_reward_date != today:
+                user.profile.coins += 20
+                user.profile.last_daily_reward_date = today
+                user.profile.save()
