@@ -702,24 +702,35 @@ function changePage(page) {
 }
 
 function updateSidebar(activeId) {
-    const buttons = ['nav-home', 'nav-stats', 'nav-profile', 'nav-shop']; // Added shop just in case
+    const desktopButtons = ['nav-home', 'nav-stats', 'nav-profile', 'nav-shop']; // Added shop just in case
+    const mobileButtons = ['mobile-nav-home', 'mobile-nav-stats', 'mobile-nav-profile'];
+    const allButtons = [...desktopButtons, ...mobileButtons];
 
-    buttons.forEach(id => {
+    allButtons.forEach(id => {
         const btn = document.getElementById(id);
         if (!btn) return;
 
         const icon = btn.querySelector('i');
+        const isMobile = id.startsWith('mobile-');
 
-        if (id === activeId) {
+        if (id === activeId || id === `mobile-${activeId}`) {
             // Active Styles
-            btn.className = "nav-item w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl bg-slate-900 text-white transition-all group relative shadow-lg shadow-slate-900/20";
+            if (!isMobile) {
+                btn.className = "nav-item w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl bg-slate-900 text-white transition-all group relative shadow-lg shadow-slate-900/20";
+            } else {
+                btn.className = "nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-800 bg-slate-100 transition-all font-bold";
+            }
             if (icon) {
                 icon.classList.remove('ph-bold');
                 icon.classList.add('ph-fill');
             }
         } else {
             // Inactive Styles
-            btn.className = "nav-item w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md transition-all group";
+            if (!isMobile) {
+                btn.className = "nav-item w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md transition-all group";
+            } else {
+                btn.className = "nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all font-semibold";
+            }
             if (icon) {
                 icon.classList.remove('ph-fill');
                 icon.classList.add('ph-bold');

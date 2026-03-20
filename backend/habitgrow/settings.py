@@ -45,11 +45,13 @@ INSTALLED_APPS = [
     'corsheaders',
     'drf_spectacular',
     'django_filters',
+    'import_export',
     
     # Local apps
     'users.apps.UsersConfig',
     'pets.apps.PetsConfig',
     'habits.apps.HabitsConfig',
+    'practica.apps.PracticaConfig',
 ]
 
 MIDDLEWARE = [
