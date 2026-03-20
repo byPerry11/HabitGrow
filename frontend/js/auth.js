@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:8000/users/api';
+const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+const API_URL = isLocalhost ? 'http://localhost:8000/users/api' : 'https://tu-api-render.onrender.com/users/api';
 
 // Handle Login
 async function handleLogin(e) {

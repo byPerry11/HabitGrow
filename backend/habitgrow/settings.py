@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 from decouple import config
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # CORS debe ir antes de CommonMiddleware
     'django.middleware.common.CommonMiddleware',
@@ -90,14 +92,14 @@ WSGI_APPLICATION = 'habitgrow.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='habitgrow_db'),
-        'USER': config('DB_USER', default='habitgrow_user'),
-        'PASSWORD': config('DB_PASSWORD', default='habitgrow_password'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-    }
+    'default': dj_database_url.config(
+        default=config(
+            'DATABASE_URL', 
+            default=f"postgres://{config('DB_USER', default='habitgrow_user')}:{config('DB_PASSWORD', default='habitgrow_password')}@{config('DB_HOST', default='localhost')}:{config('DB_PORT', default='5432')}/{config('DB_NAME', default='habitgrow_db')}"
+        ),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
