@@ -1,6 +1,6 @@
 // URL base de la API del backend
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-const API_BASE_URL = isLocalhost ? 'http://localhost:8000/api/v1' : 'https://tu-api-render.onrender.com/api/v1';
+const API_BASE_URL = isLocalhost ? 'http://localhost:8000/api/v1' : 'https://habitgrow.onrender.com/api/v1';
 
 // Estado interno para rastrear datos del usuario, mascota y hábitos
 const state = {
