@@ -129,6 +129,13 @@ function renderPet(mascota) {
     const infoContainer = document.getElementById('petInfoContainer');
     if (infoContainer) infoContainer.classList.remove('hidden');
 
+    // Actualizar nombre en el badge y título
+    const badgeEl = document.getElementById('petBadgeName');
+    if (badgeEl) badgeEl.textContent = mascota.nombre || 'Compañero';
+
+    const petNameEl = document.getElementById('petName');
+    if (petNameEl) petNameEl.textContent = mascota.nombre || 'Tu Mascota';
+
     // Actualizar estado de salud
     document.getElementById('petStatus').textContent = mascota.estado_salud_display;
     document.getElementById('petStatusIndicator').className = `w-2.5 h-2.5 rounded-full animate-pulse ${getColorClass(mascota.estado_salud)}`;
@@ -185,6 +192,10 @@ function renderNoPet() {
 
     const infoContainer = document.getElementById('petInfoContainer');
     if (infoContainer) infoContainer.classList.add('hidden');
+
+    // Resetear badge
+    const badgeEl = document.getElementById('petBadgeName');
+    if (badgeEl) badgeEl.textContent = 'Compañero';
 
     // Egg Container
     const container = document.getElementById('petContainer');
