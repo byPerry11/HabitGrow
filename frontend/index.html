@@ -89,7 +89,7 @@
   </style>
 </head>
 
-<body class="bg-slate-50 font-sans min-h-screen flex flex-col items-center justify-center relative overflow-hidden p-4">
+<body class="bg-slate-50 font-sans min-h-screen flex flex-col items-center justify-center relative overflow-hidden p-4 pb-16">
 
   <!-- Background Elements (Matches Dashboard) -->
   <div class="absolute inset-0 z-0">
@@ -158,8 +158,9 @@
               class="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-400 font-medium h-full text-sm"
               required>
             <button type="button" onclick="togglePassword('loginPass', this)"
-              class="text-slate-400 hover:text-slate-600 transition-colors">
+              class="text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center w-5 h-5 shrink-0">
               <i class="ph ph-eye text-lg"></i>
+              <i class="ph ph-eye-slash text-lg hidden"></i>
             </button>
           </div>
         </div>
@@ -332,14 +333,17 @@
       // Password Toggle
       function togglePassword(inputId, btn) {
         const input = document.getElementById(inputId);
-        const icon = btn.querySelector('i');
+        const iconEye = btn.querySelector('.ph-eye:not(.ph-eye-slash)');
+        const iconEyeSlash = btn.querySelector('.ph-eye-slash');
 
         if (input.type === 'password') {
           input.type = 'text';
-          icon.classList.replace('ph-eye', 'ph-eye-slash');
+          iconEye.classList.add('hidden');
+          iconEyeSlash.classList.remove('hidden');
         } else {
           input.type = 'password';
-          icon.classList.replace('ph-eye-slash', 'ph-eye');
+          iconEyeSlash.classList.add('hidden');
+          iconEye.classList.remove('hidden');
         }
       }
 
