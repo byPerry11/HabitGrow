@@ -788,10 +788,18 @@ async function fetchProfileData() {
 
         // Fetch Pet (for profile summary)
         let petText = "No tienes compañero aún";
+        let petNivelReal = 1;
+        let petXpTotal = 0;
+        let petXpProgreso = 0;
+        let petNombreReal = 'Tu Compañero';
         try {
             const petRes = await fetch(`${API_BASE_URL}/mascota/me/`, { headers: { 'Authorization': `Token ${token}` } });
             const pet = await petRes.json();
-            petText = `${pet.nombre} - Nivel ${pet.nivel_evolucion}`;
+            petNombreReal = pet.nombre || 'Tu Compañero';
+            petNivelReal = pet.nivel || 1;
+            petXpTotal = pet.total_xp || 0;
+            petXpProgreso = pet.progreso_nivel || 0;
+            petText = `${petNombreReal} - Nivel ${petNivelReal}`;
         } catch (e) {
             // No pet
         }
@@ -805,6 +813,33 @@ async function fetchProfileData() {
         document.getElementById('profileXP').textContent = profile.total_xp;
         document.getElementById('profileCoins').textContent = profile.coins;
         document.getElementById('profilePetInfo').textContent = petText;
+
+        // --- Sección Mascota en Perfil: Sprite + Nivel + XP ---
+        const petNameEl = document.getElementById('profilePetName');
+        if (petNameEl) petNameEl.textContent = petNombreReal;
+
+        // Sprite: baby (nivel < 5) o adult (nivel >= 5)
+        const spriteBaby = document.getElementById('petSpriteBaby');
+        const spriteAdult = document.getElementById('petSpriteAdult');
+        if (spriteBaby && spriteAdult) {
+            if (petNivelReal >= 5) {
+                spriteBaby.classList.add('hidden');
+                spriteAdult.classList.remove('hidden');
+            } else {
+                spriteBaby.classList.remove('hidden');
+                spriteAdult.classList.add('hidden');
+            }
+        }
+
+        // Badge de nivel en sprite
+        const spriteLevelEl = document.getElementById('petSpriteLevel');
+        if (spriteLevelEl) spriteLevelEl.textContent = petNivelReal;
+
+        // Barra y texto de XP
+        const xpBarEl = document.getElementById('petXpBar');
+        const xpTextEl = document.getElementById('petXpText');
+        if (xpBarEl) xpBarEl.style.width = `${petXpProgreso}%`;
+        if (xpTextEl) xpTextEl.textContent = `${petXpTotal} XP`;
 
         if (profile.profile_picture) {
             const apiBase = API_BASE_URL.replace('/api/v1', '');

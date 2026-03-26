@@ -220,7 +220,7 @@ def update_mascota_on_habit_completion(sender, instance, created, **kwargs):
     # --- RECOMPENSAS POR HÁBITO COMPLETADO ---
     # 1. Añadir XP a la mascota
     if hasattr(user, 'mascota'):
-        user.mascota.add_xp(10)  # +10 XP por cada hábito completado
+        user.mascota.add_xp(15)  # +15 XP por cada hábito completado (+50% vs base original)
     
     # 2. Curar la mascota
     if hasattr(user, 'mascota'):
