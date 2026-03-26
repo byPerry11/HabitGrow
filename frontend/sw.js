@@ -1,56 +1,78 @@
-// Estrategia Cache-First para estáticos
-const CACHE_NAME = 'habitgrow-cache-v3';
-const urlsToCache = [
-  './',
-  './index.html',
-  './dashboard.html',
-  './css/style.css',
-  './css/dashboard.css',
-  './js/auth.js',
-  './js/dashboard.js',
-  './js/pwa.js',
+// ─── HabitGrow Service Worker ───────────────────────────────────────────────
+// Incrementa CACHE_VERSION en cada deploy para invalidar caché anterior.
+const CACHE_VERSION = 'v4';
+const CACHE_NAME = `habitgrow-cache-${CACHE_VERSION}`;
+
+// Assets que se pre-cachean (solo imágenes y recursos lentos)
+const PRECACHE_ASSETS = [
   './assets/icon.png',
   './assets/mascotas/Gizzmo/Idle.jpg'
-  // Puedes añadir más assets relevantes
 ];
 
+// ── INSTALL: pre-cachear solo assets pesados ─────────────────────────────────
 self.addEventListener('install', event => {
+  // Activa este SW inmediatamente sin esperar a que cierren las pestañas
+  self.skipWaiting();
+
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Opened cache');
-        return cache.addAll(urlsToCache);
-      })
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(PRECACHE_ASSETS);
+    })
   );
 });
 
+// ── ACTIVATE: eliminar cachés antiguas y tomar control de inmediato ───────────
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    Promise.all([
+      // Tomar control de todas las pestañas abiertas sin recargar
+      clients.claim(),
+      // Eliminar todos los cachés que no sean el actual
+      caches.keys().then(cacheNames =>
+        Promise.all(
+          cacheNames
+            .filter(name => name !== CACHE_NAME)
+            .map(name => caches.delete(name))
+        )
+      )
+    ])
+  );
+});
+
+// ── FETCH: estrategia según tipo de recurso ───────────────────────────────────
 self.addEventListener('fetch', event => {
-  // Ignorar peticiones a la API para asegurar frescura de datos
-  if (event.request.url.includes('/api/')) {
+  const url = new URL(event.request.url);
+
+  // 1. Ignorar peticiones a la API — siempre van a la red
+  if (url.pathname.includes('/api/')) return;
+
+  // 2. HTML, JS y CSS → Network-First (siempre fresco, cache como fallback)
+  const isDocument = event.request.destination === 'document';
+  const isScript   = event.request.destination === 'script';
+  const isStyle    = event.request.destination === 'style';
+
+  if (isDocument || isScript || isStyle) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Guardar copia fresca en cache
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          return response;
+        })
+        .catch(() => caches.match(event.request)) // Fallback offline
+    );
     return;
   }
 
+  // 3. Imágenes y otros assets → Cache-First (cambian poco)
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Devuelve cache si existe, sino hace fetch
-        return response || fetch(event.request);
-      })
-  );
-});
-
-// Limpieza de cachés antiguas
-self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (cacheWhitelist.indexOf(cacheName) === -1) {
-            return caches.delete(cacheName);
-          }
-        })
-      );
+    caches.match(event.request).then(cached => {
+      return cached || fetch(event.request).then(response => {
+        const clone = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return response;
+      });
     })
   );
 });
