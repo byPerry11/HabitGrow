@@ -1,0 +1,29 @@
+# ─── Netlify Configuration ────────────────────────────────────────────────────
+[build]
+  # Directorio raíz del frontend (lo que se publica)
+  publish = "frontend"
+
+  # Comando que se ejecuta antes de publicar:
+  # Inyecta el hash del commit actual como versión del SW cache.
+  # $COMMIT_REF es provisto automáticamente por Netlify en cada deploy.
+  command = "node scripts/bump-sw-version.js"
+
+# ─── Headers de caché ─────────────────────────────────────────────────────────
+# sw.js NUNCA debe cachearse por el browser (para que siempre tome el nuevo)
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+    Pragma = "no-cache"
+
+# HTML tampoco se cachea para garantizar frescura
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+# Assets estáticos sí pueden cachearse largo plazo
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
