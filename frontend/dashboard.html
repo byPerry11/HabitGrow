@@ -134,6 +134,18 @@
         .card-elevated {
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
         }
+
+        /* Main content: padding bottom diferenciado por breakpoint */
+        #mainContent {
+            padding: 1rem;
+            padding-bottom: 9rem; /* mobile: espacio para nav bar fija */
+        }
+        @media (min-width: 1024px) {
+            #mainContent {
+                padding: 2rem;
+                padding-bottom: 2rem; /* desktop: sin nav bar */
+            }
+        }
     </style>
 </head>
 
@@ -186,15 +198,15 @@
     </aside>
 
     <!-- Main Content Area -->
-    <main class="flex-1 p-4 lg:p-8 overflow-y-auto relative" style="padding-bottom: 7rem;" id="mainContent">
+    <main class="flex-1 overflow-y-auto relative" id="mainContent">
 
         <!-- Header (Shared) -->
         <header id="mainHeader"
             class="flex justify-between items-center bg-white/70 backdrop-blur-xl p-6 rounded-[2rem] shadow-sm border border-white/50 mb-12">
             <div>
                 <h2 class="text-3xl font-extrabold text-slate-800" id="headerTitle">Hola, <span id="userName"
-                        class="text-brand-600">Jardinero</span> 👋</h2>
-                <p class="text-slate-500 font-medium mt-1" id="headerSubtitle">¡Hagamos crecer tus hábitos hoy!</p>
+                        class="text-brand-600">Jardinero</span></h2>
+
             </div>
             <div class="flex items-center gap-6">
                 <div
@@ -204,7 +216,8 @@
                 </div>
 
                 <!-- Profile Picture - Click to view profile -->
-                <div id="headerProfilePicContainer" class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform relative group"
+                <div id="headerProfilePicContainer"
+                    class="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-md cursor-pointer hover:scale-105 transition-transform relative group"
                     onclick="changePage('profile')">
                     <img id="headerProfilePic" src="https://ui-avatars.com/api/?name=User&background=10b981&color=fff"
                         alt="Profile" class="w-full h-full object-cover">
@@ -231,7 +244,8 @@
                         <div>
                             <span id="petBadgeName"
                                 class="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border border-white/10">Compañero</span>
-                            <h3 id="petName" class="hidden lg:block text-4xl font-extrabold mt-3 tracking-tight">Tu Mascota</h3>
+                            <h3 id="petName" class="hidden lg:block text-4xl font-extrabold mt-3 tracking-tight">Tu
+                                Mascota</h3>
                             <p id="petSpecies" class="text-brand-100 font-medium"><span
                                     id="petStatus">Desconocido</span></p>
                         </div>
@@ -717,16 +731,20 @@
         </div>
     </div>
     <!-- Mobile Bottom Navigation -->
-    <nav class="lg:hidden fixed bottom-4 inset-x-4 bg-white/85 backdrop-blur-xl border border-white/60 p-2 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 flex justify-around items-center">
-        <button onclick="changePage('home')" id="mobile-nav-home" class="nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-800 bg-slate-100 transition-all font-bold">
+    <nav
+        class="lg:hidden fixed bottom-4 inset-x-4 bg-white/85 backdrop-blur-xl border border-white/60 p-2 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] z-50 flex justify-around items-center">
+        <button onclick="changePage('home')" id="mobile-nav-home"
+            class="nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-800 bg-slate-100 transition-all font-bold">
             <i class="ph-fill ph-house text-2xl"></i>
             <span class="text-[10px] uppercase tracking-wider mt-1">Inicio</span>
         </button>
-        <button onclick="changePage('stats')" id="mobile-nav-stats" class="nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all font-semibold">
+        <button onclick="changePage('stats')" id="mobile-nav-stats"
+            class="nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all font-semibold">
             <i class="ph-bold ph-chart-bar text-2xl"></i>
             <span class="text-[10px] uppercase tracking-wider mt-1">Status</span>
         </button>
-        <button onclick="changePage('profile')" id="mobile-nav-profile" class="nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all font-semibold">
+        <button onclick="changePage('profile')" id="mobile-nav-profile"
+            class="nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all font-semibold">
             <i class="ph-bold ph-user text-2xl"></i>
             <span class="text-[10px] uppercase tracking-wider mt-1">Perfil</span>
         </button>

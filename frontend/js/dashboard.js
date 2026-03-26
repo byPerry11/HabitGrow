@@ -89,10 +89,20 @@ async function fetchProfile() {
         const coinsEl = document.getElementById('userCoins');
         if (coinsEl) coinsEl.textContent = data.coins || 0;
 
-        // Actualizar imagen de perfil
+        // Actualizar imagen de perfil (URL dinámica según entorno)
         const profilePic = document.getElementById('headerProfilePic');
-        if (profilePic && data.profile_picture) {
-            profilePic.src = `http://localhost:8000${data.profile_picture}`;
+        if (profilePic) {
+            if (data.profile_picture) {
+                // Si la URL ya es absoluta (empieza con 'http') la usa directo
+                // Si es relativa (ej: /media/...) construye la base correcta
+                const apiBase = API_BASE_URL.replace('/api/v1', '');
+                profilePic.src = data.profile_picture.startsWith('http')
+                    ? data.profile_picture
+                    : `${apiBase}${data.profile_picture}`;
+            } else {
+                // Fallback: avatar generado con las iniciales del usuario
+                profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=10b981&color=fff`;
+            }
         }
 
         // NOTA: XP y Nivel ahora se obtienen desde la mascota (ver renderPet)
