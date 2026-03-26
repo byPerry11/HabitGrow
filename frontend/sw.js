@@ -1,5 +1,5 @@
 // Estrategia Cache-First para estáticos
-const CACHE_NAME = 'habitgrow-cache-v2';
+const CACHE_NAME = 'habitgrow-cache-v3';
 const urlsToCache = [
   './',
   './index.html',
