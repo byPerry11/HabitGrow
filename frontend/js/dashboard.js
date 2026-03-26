@@ -681,13 +681,21 @@ function changePage(page) {
         if (headerTitle) headerTitle.innerHTML = `Hola, <span id="userName" class="text-brand-600">${userName}</span> 👋`;
         if (headerSubtitle) headerSubtitle.textContent = "¡Hagamos crecer tus hábitos hoy!";
 
+        // Mostrar foto de perfil en home
+        const picContainerHome = document.getElementById('headerProfilePicContainer');
+        if (picContainerHome) picContainerHome.classList.remove('hidden');
+
     } else if (page === 'stats') {
         document.getElementById('statsView')?.classList.remove('hidden');
         updateSidebar('nav-stats');
 
         mainHeader?.classList.remove('hidden');
-        if (headerTitle) headerTitle.innerHTML = `Estadísticas <span class="text-brand-600">Globales</span> 📊`;
+        if (headerTitle) headerTitle.innerHTML = `Estadísticas 📊`;
         if (headerSubtitle) headerSubtitle.textContent = "Visualiza tu constancia y logros";
+
+        // Ocultar foto de perfil en stats
+        const picContainerStats = document.getElementById('headerProfilePicContainer');
+        if (picContainerStats) picContainerStats.classList.add('hidden');
 
         // Refresh stats/heatmap if needed
         fetchHeatMap();
