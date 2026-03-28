@@ -204,6 +204,12 @@ CORS_ALLOW_CREDENTIALS = True
 # DRF Spectacular (API Documentation)
 # https://drf-spectacular.readthedocs.io/en/latest/settings.html
 
+# SSL / HTTPS Configuración para Dokploy/Traefik
+# Le indica a Django que está detrás de un proxy inverso que maneja el SSL
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
 SPECTACULAR_SETTINGS = {
     'TITLE': 'HabitGrow API',
     'DESCRIPTION': 'API para seguimiento de hábitos con sistema de gamificación mediante mascota virtual',
