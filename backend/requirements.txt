@@ -32,4 +32,4 @@ django-filter>=24.0.0
 django-import-export>=4.0.0
 
 # Google OAuth2 - Verificación de ID tokens
-google-auth>=2.27.0
+google-auth[requests]>=2.27.0
