@@ -30,3 +30,6 @@ django-extensions==3.2.3
 # Added explicitly for INSTALLED_APPS missing modules
 django-filter>=24.0.0
 django-import-export>=4.0.0
+
+# Google OAuth2 - Verificación de ID tokens
+google-auth>=2.27.0

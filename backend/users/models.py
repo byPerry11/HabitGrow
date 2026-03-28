@@ -56,6 +56,20 @@ class Profile(models.Model):
         verbose_name='Última Recompensa Diaria',
         help_text='Fecha de la última vez que se otorgó la recompensa diaria de monedas'
     )
+    google_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        unique=True,
+        verbose_name='Google ID',
+        help_text='Identificador único de la cuenta de Google vinculada (sub)'
+    )
+    google_avatar = models.URLField(
+        null=True,
+        blank=True,
+        verbose_name='Avatar de Google',
+        help_text='URL del avatar de perfil de Google'
+    )
 
     class Meta:
         verbose_name = 'Perfil'

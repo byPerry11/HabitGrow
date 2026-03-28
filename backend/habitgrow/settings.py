@@ -226,3 +226,11 @@ REDIS_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
 # Celery Configuration (configurado pero no implementado aún)
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
+
+
+# Google OAuth2
+# Client ID registrado en Google Cloud Console
+GOOGLE_CLIENT_ID = config(
+    'GOOGLE_CLIENT_ID',
+    default='866585569442-obck0r7o5u6q7664e2rs25b3ou55root.apps.googleusercontent.com'
+)

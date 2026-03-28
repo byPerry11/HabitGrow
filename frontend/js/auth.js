@@ -117,7 +117,60 @@ function resetBtn(btn, content) {
     btn.disabled = false;
 }
 
-// Initial check
+// ───────────────────────────────────────────────
+// Google Sign-In / One Tap
+// ───────────────────────────────────────────────
+
+/**
+ * Callback que invoca Google cuando el usuario completa el Sign-In.
+ * Se llama desde el botón de Google (data-callback="handleGoogleLogin")
+ * y también desde One Tap.
+ *
+ * @param {Object} response - Objeto de respuesta de Google con { credential }
+ */
+async function handleGoogleLogin(response) {
+    const googleBtn = document.getElementById('googleSignInBtn');
+    const originalContent = googleBtn ? googleBtn.innerHTML : null;
+
+    // Mostrar estado de carga en el botón
+    if (googleBtn) {
+        googleBtn.innerHTML = '<i class="ph-bold ph-spinner animate-spin text-xl mr-2"></i>Conectando...';
+        googleBtn.disabled = true;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/google-auth/`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id_token: response.credential })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+
+            const msg = data.created
+                ? `¡Bienvenido a HabitGrow, ${data.user.username}! 🐾`
+                : `¡Hola de nuevo, ${data.user.username}!`;
+
+            showToast(msg, 'success');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1200);
+        } else {
+            showToast(data.error || 'Error al iniciar sesión con Google', 'error');
+            if (googleBtn && originalContent) resetBtn(googleBtn, originalContent);
+        }
+    } catch (error) {
+        console.error('Google Auth Error:', error);
+        showToast('Error de conexión con el servidor', 'error');
+        if (googleBtn && originalContent) resetBtn(googleBtn, originalContent);
+    }
+}
+
+// Initial check — redirige al dashboard si ya tiene sesión activa
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     if (token) {
