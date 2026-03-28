@@ -26,3 +26,7 @@ pytz==2024.2
 
 # Development tools
 django-extensions==3.2.3
+
+# Added explicitly for INSTALLED_APPS missing modules
+django-filter>=24.0.0
+django-import-export>=4.0.0
