@@ -147,13 +147,21 @@ function renderPet(mascota) {
     if (petNameEl) petNameEl.textContent = mascota.nombre || 'Tu Mascota';
 
     // Actualizar estado de salud
-    document.getElementById('petStatus').textContent = mascota.estado_salud_display;
-    document.getElementById('petStatusIndicator').className = `w-2.5 h-2.5 rounded-full animate-pulse ${getColorClass(mascota.estado_salud)}`;
+    const petStatusEl = document.getElementById('petStatus');
+    if (petStatusEl) petStatusEl.textContent = mascota.estado_salud_display;
+    
+    const petStatusIndicatorEl = document.getElementById('petStatusIndicator');
+    if (petStatusIndicatorEl) petStatusIndicatorEl.className = `w-2.5 h-2.5 rounded-full animate-pulse ${getColorClass(mascota.estado_salud)}`;
 
     // Actualizar barra de salud (HP)
-    document.getElementById('hpText').textContent = `${mascota.puntos_vida}%`;
-    document.getElementById('hpBar').style.width = `${mascota.puntos_vida}%`;
-    document.getElementById('hpBar').style.backgroundColor = mascota.color;
+    const hpTextEl = document.getElementById('hpText');
+    if (hpTextEl) hpTextEl.textContent = `${mascota.puntos_vida}%`;
+    
+    const hpBarEl = document.getElementById('hpBar');
+    if (hpBarEl) {
+        hpBarEl.style.width = `${mascota.puntos_vida}%`;
+        hpBarEl.style.backgroundColor = mascota.color;
+    }
 
     // --- Sistema de XP y Nivel ---
     // Actualizar nivel de la mascota
