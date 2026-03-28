@@ -70,7 +70,6 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'pets.apps.PetsConfig',
     'habits.apps.HabitsConfig',
-    'practica.apps.PracticaConfig',
 ]
 
 MIDDLEWARE = [
