@@ -595,6 +595,37 @@ async function fetchHeatMap() {
     }
 }
 
+function createMonthLabelsRow(startDate, cellWidthClass) {
+    const months = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const monthRow = document.createElement('div');
+    monthRow.className = "flex gap-1 mb-1 min-w-max text-[10px] text-slate-400 font-semibold select-none h-3";
+    
+    const firstDayIndex = (startDate.getDay() + 6) % 7;
+    const totalCells = firstDayIndex + 365;
+    const totalCols = Math.ceil(totalCells / 7);
+    
+    let currentMonth = -1;
+    for (let col = 0; col < totalCols; col++) {
+        const cell = document.createElement('div');
+        cell.className = `${cellWidthClass} relative`; 
+        
+        const dayOffset = (col * 7) - firstDayIndex;
+        // Check Thursday representation for the week
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + dayOffset + 3);
+        
+        if (d.getMonth() !== currentMonth) {
+            const span = document.createElement('span');
+            span.textContent = months[d.getMonth()];
+            span.className = "absolute left-0 top-0";
+            cell.appendChild(span);
+            currentMonth = d.getMonth();
+        }
+        monthRow.appendChild(cell);
+    }
+    return monthRow;
+}
+
 function renderHeatMap(data) {
     const container = document.getElementById('heatmapContainer');
     if (!container) return;
@@ -640,8 +671,13 @@ function renderHeatMap(data) {
         grid.appendChild(cell);
     }
     
-    // Put grid in a wrapper with x-scroll (handled by parent html already, but we ensure it)
-    container.appendChild(grid);
+    // Put timeline into container
+    const wrap = document.createElement('div');
+    wrap.className = "flex flex-col";
+    wrap.appendChild(createMonthLabelsRow(startDate, "w-3"));
+    wrap.appendChild(grid);
+    
+    container.appendChild(wrap);
 }
 
 let habitHeatmapsLoaded = false;
@@ -762,7 +798,12 @@ async function renderHabitHeatmaps() {
                 grid.appendChild(cell);
             }
             
-            gridWrap.appendChild(grid);
+            const wrap = document.createElement('div');
+            wrap.className = "flex flex-col";
+            wrap.appendChild(createMonthLabelsRow(startDate, "w-2.5"));
+            wrap.appendChild(grid);
+            
+            gridWrap.appendChild(wrap);
             card.appendChild(gridWrap);
             container.appendChild(card);
         }
