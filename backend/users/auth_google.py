@@ -13,6 +13,9 @@ Flujo:
 """
 
 import re
+import logging
+
+logger = logging.getLogger(__name__)
 from django.contrib.auth.models import User
 from django.conf import settings
 from rest_framework import status
@@ -39,6 +42,16 @@ class GoogleLoginAPIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        try:
+            return self._handle_login(request)
+        except Exception as e:
+            logger.exception('Error en Google Auth')
+            return Response(
+                {'error': f'Error interno: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    def _handle_login(self, request):
         credential = request.data.get('id_token')
 
         if not credential:
