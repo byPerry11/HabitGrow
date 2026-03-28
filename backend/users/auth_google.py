@@ -13,6 +13,7 @@ Flujo:
 """
 
 import re
+import traceback
 from django.contrib.auth.models import User
 from django.conf import settings
 from rest_framework import status
@@ -40,6 +41,16 @@ class GoogleLoginAPIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        try:
+            return self._handle_google_login(request)
+        except Exception as e:
+            return Response({
+                'error': 'Error interno del servidor',
+                'detail': str(e),
+                'trace': traceback.format_exc(),
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def _handle_google_login(self, request):
         credential = request.data.get('id_token')
 
         if not credential:
@@ -62,7 +73,7 @@ class GoogleLoginAPIView(APIView):
             )
 
         # Extraer datos del usuario desde el token verificado
-        google_user_id = idinfo['sub']          # ID único de Google
+        google_user_id = idinfo['sub']
         email = idinfo.get('email', '').lower()
         first_name = idinfo.get('given_name', '')
         last_name = idinfo.get('family_name', '')
@@ -104,7 +115,6 @@ class GoogleLoginAPIView(APIView):
                     email=email,
                     first_name=first_name,
                     last_name=last_name,
-                    # Sin contraseña → solo puede loguearse con Google
                     password=User.objects.make_random_password()
                 )
                 profile = user.profile
@@ -112,7 +122,7 @@ class GoogleLoginAPIView(APIView):
                 profile.google_avatar = google_avatar
                 profile.save()
 
-        # Actualizar nombre si cambió en Google (solo si hay cambios)
+        # Actualizar nombre si cambió en Google
         if first_name and user.first_name != first_name:
             user.first_name = first_name
             user.last_name = last_name
