@@ -27,7 +27,23 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-18re_67-b3!i1ox$q5njv
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=lambda v: [s.strip() for s in v.split(',')])
+# Hosts permitidos en producción
+ALLOWED_HOSTS = [
+    'habitgrowtracking.com',
+    'www.habitgrowtracking.com',
+    '2.57.91.91',  # Tu IP
+    'localhost',
+    '127.0.0.1',
+]
+
+# Muy importante para que el panel de administración y los formularios funcionen con HTTPS
+CSRF_TRUSTED_ORIGINS = [
+    'https://habitgrowtracking.com',
+    'https://www.habitgrowtracking.com'
+]
+
+# Si usas un Proxy (como el que trae Dokploy)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 
 # Application definition

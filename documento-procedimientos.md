@@ -87,3 +87,39 @@
 ---
 
 Fin del documento — versión inicial.
+
+---
+
+## **Despliegue en VPS con Dokploy**
+
+- **Resumen:** despliegue con Docker usando el `Dockerfile` del repositorio y `docker-compose.prod.yml` en el VPS. Dokploy puede invocar el script `deploy.sh` del repositorio que realiza el build y levanta los servicios.
+
+- **Archivos añadidos:**
+  - `Dockerfile` — imágenes de producción (migraciones y collectstatic ejecutados vía `backend/entrypoint.sh`).
+  - `backend/entrypoint.sh` — ejecuta migraciones y `collectstatic` antes de arrancar Gunicorn.
+  - `.env.example` — plantilla de variables de entorno para producción.
+  - `docker-compose.prod.yml` — compose para producción (web, db, redis, healthchecks).
+  - `deploy.sh` — script de despliegue pensado para ser ejecutado por Dokploy en el VPS.
+
+- **Variables obligatorias:** copiar ` .env.example` → `.env.production` y rellenar al menos:
+  - `SECRET_KEY`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `REDIS_URL`, `ALLOWED_HOSTS`.
+
+- **Comandos de despliegue manual (VPS):**
+
+```bash
+# en el VPS, en la carpeta del repo
+cp .env.example .env.production   # editar valores
+./deploy.sh
+```
+
+- **Notas sobre Dokploy:** configure Dokploy para ejecutar `./deploy.sh` después de hacer `git pull` en el servidor o al recibir el hook de deploy. El script utiliza `docker compose -f docker-compose.prod.yml up -d --build`.
+
+- **HTTPS y dominio:** configurar un proxy inverso (NGINX) o usar un contenedor adicional para TLS (traefik/certbot). Recomendado flujo:
+  1. Mapear el puerto 80/443 del VPS a NGINX/Traefik.
+ 2. Configurar certificados Let's Encrypt automáticos.
+ 3. Proxear hacia `http://localhost:8000` donde corre Gunicorn.
+
+- **Healthcheck:** `docker-compose.prod.yml` incluye checks básicos; recomendamos exponer un endpoint mínimo `/health` que devuelva 200 para validar disponibilidad.
+
+- **Rollback:** mantener imágenes previas en el servidor o usar tags por commit: `testmascota_web:<commit>` y en caso de fallo `docker compose -f docker-compose.prod.yml up -d <tag>`.
+
