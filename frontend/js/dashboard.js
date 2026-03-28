@@ -601,7 +601,8 @@ function createMonthLabelsRow(startDate, cellWidthClass) {
     monthRow.className = "flex gap-1 mb-1 min-w-max text-[10px] text-slate-400 font-semibold select-none h-3";
     
     const firstDayIndex = (startDate.getDay() + 6) % 7;
-    const totalCells = firstDayIndex + 365;
+    const isLeap = (startDate.getFullYear() % 4 === 0 && startDate.getFullYear() % 100 !== 0) || (startDate.getFullYear() % 400 === 0);
+    const totalCells = firstDayIndex + (isLeap ? 366 : 365);
     const totalCols = Math.ceil(totalCells / 7);
     
     let currentMonth = -1;
@@ -631,14 +632,16 @@ function renderHeatMap(data) {
     if (!container) return;
     container.innerHTML = '';
 
-    // We want the last 365 days up to today.
+    // Normalizar hoy
     const today = new Date();
-    // Normalize today to start of day
     today.setHours(0,0,0,0);
     
-    // Start date is 364 days ago
-    const startDate = new Date(today);
-    startDate.setDate(today.getDate() - 364);
+    // Start date is Jan 1st of the current year
+    const currentYear = today.getFullYear();
+    const startDate = new Date(currentYear, 0, 1);
+    
+    const isLeapYear = (currentYear % 4 === 0 && currentYear % 100 !== 0) || (currentYear % 400 === 0);
+    const totalDays = isLeapYear ? 366 : 365;
 
     // Grid container with horizontal scrolling
     const grid = document.createElement('div');
@@ -656,14 +659,14 @@ function renderHeatMap(data) {
     }
 
     // Days calculation
-    for (let i = 0; i < 365; i++) {
+    for (let i = 0; i < totalDays; i++) {
         const d = new Date(startDate);
         d.setDate(startDate.getDate() + i);
         
         const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const count = data[dateStr] || 0;
         
-        const isToday = (i === 364);
+        const isToday = (d.getTime() === today.getTime());
 
         const cell = document.createElement('div');
         cell.className = `w-3 h-3 rounded-sm cursor-pointer transition-transform hover:scale-125 ${getColorForCount(count)} ${isToday ? 'ring-2 ring-brand-400 ring-offset-1 z-10' : ''}`;
@@ -770,8 +773,12 @@ async function renderHabitHeatmaps() {
             
             const today = new Date();
             today.setHours(0,0,0,0);
-            const startDate = new Date(today);
-            startDate.setDate(today.getDate() - 364);
+            const currentYear = today.getFullYear();
+            const startDate = new Date(currentYear, 0, 1);
+            
+            const isLeapYear = (currentYear % 4 === 0 && currentYear % 100 !== 0) || (currentYear % 400 === 0);
+            const totalDays = isLeapYear ? 366 : 365;
+            
             const firstDayIndex = (startDate.getDay() + 6) % 7;
             for (let pad = 0; pad < firstDayIndex; pad++) {
                 const empty = document.createElement('div');
@@ -779,7 +786,7 @@ async function renderHabitHeatmaps() {
                 grid.appendChild(empty);
             }
             
-            for (let d_idx = 0; d_idx < 365; d_idx++) {
+            for (let d_idx = 0; d_idx < totalDays; d_idx++) {
                 const d = new Date(startDate);
                 d.setDate(startDate.getDate() + d_idx);
                 const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -849,7 +856,7 @@ function changePage(page) {
     // Defaulting 'dashboard' to 'home'
     if (page === 'dashboard') page = 'home';
 
-    const views = ['homeView', 'statsView', 'profileView'];
+    const views = ['homeView', 'statsView', 'profileView', 'shopView'];
     views.forEach(viewId => {
         document.getElementById(viewId)?.classList.add('hidden');
     });
@@ -894,12 +901,17 @@ function changePage(page) {
         mainHeader?.classList.add('hidden');
 
         fetchProfileData();
+    } else if (page === 'shop') {
+        document.getElementById('shopView')?.classList.remove('hidden');
+        updateSidebar('nav-shop');
+
+        mainHeader?.classList.add('hidden');
     }
 }
 
 function updateSidebar(activeId) {
-    const desktopButtons = ['nav-home', 'nav-stats', 'nav-profile', 'nav-shop']; // Added shop just in case
-    const mobileButtons = ['mobile-nav-home', 'mobile-nav-stats', 'mobile-nav-profile'];
+    const desktopButtons = ['nav-home', 'nav-stats', 'nav-profile', 'nav-shop'];
+    const mobileButtons = ['mobile-nav-home', 'mobile-nav-stats', 'mobile-nav-profile', 'mobile-nav-shop'];
     const allButtons = [...desktopButtons, ...mobileButtons];
 
     allButtons.forEach(id => {

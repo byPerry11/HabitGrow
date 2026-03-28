@@ -7,7 +7,7 @@ class ProfileAdmin(admin.ModelAdmin):
     """
     Configuración del admin para Profile.
     """
-    list_display = ('user', 'nivel', 'total_xp', 'fecha_creacion')
+    list_display = ('user', 'nivel', 'total_xp', 'coins', 'fecha_creacion')
     list_filter = ('nivel', 'fecha_creacion')
     search_fields = ('user__username', 'user__email')
     readonly_fields = ('fecha_creacion', 'fecha_actualizacion')
@@ -17,7 +17,7 @@ class ProfileAdmin(admin.ModelAdmin):
             'fields': ('user',)
         }),
         ('Progreso', {
-            'fields': ('total_xp', 'nivel')
+            'fields': ('total_xp', 'nivel', 'coins')
         }),
         ('Personalización', {
             'fields': ('accesorios_equipados',)

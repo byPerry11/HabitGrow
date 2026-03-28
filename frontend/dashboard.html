@@ -184,6 +184,12 @@
                     <i class="ph-bold ph-user text-2xl"></i>
                     <span class="hidden lg:block ml-3 font-semibold">Perfil</span>
                 </button>
+
+                <button onclick="changePage('shop')" id="nav-shop"
+                    class="nav-item w-full flex items-center justify-center lg:justify-start px-3 py-3 rounded-2xl text-slate-400 hover:bg-white hover:text-slate-900 hover:shadow-md transition-all group">
+                    <i class="ph-bold ph-storefront text-2xl"></i>
+                    <span class="hidden lg:block ml-3 font-semibold">Tienda</span>
+                </button>
             </nav>
         </div>
 
@@ -202,7 +208,7 @@
 
         <!-- Header (Shared) -->
         <header id="mainHeader"
-            class="flex justify-between items-center bg-white/70 backdrop-blur-xl p-6 rounded-[2rem] shadow-sm border border-white/50 mb-12">
+            class="flex justify-between items-center bg-white/70 backdrop-blur-xl p-4 lg:p-6 rounded-2xl lg:rounded-[2rem] shadow-sm border border-white/50 mb-6 lg:mb-12">
             <div>
                 <h2 class="text-3xl font-extrabold text-slate-800" id="headerTitle">Hola, <span id="userName"
                         class="text-brand-600">Jardinero</span></h2>
@@ -230,11 +236,11 @@
         </header>
 
         <!-- VIEW: HOME (Inicio) -->
-        <div id="homeView" class="animate-fade-in">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div id="homeView" class="animate-fade-in p-2 lg:p-0">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-8">
                 <!-- Pet Card -->
                 <div
-                    class="lg:col-span-2 bg-gradient-to-br from-brand-500 to-brand-600 rounded-[2.5rem] p-8 text-white relative overflow-hidden shadow-2xl card-elevated h-96 flex flex-col justify-between">
+                    class="lg:col-span-2 bg-gradient-to-br from-brand-500 to-brand-600 rounded-3xl lg:rounded-[2.5rem] p-5 lg:p-8 text-white relative overflow-hidden shadow-2xl card-elevated h-96 flex flex-col justify-between">
                     <!-- Background Pattern -->
                     <div class="absolute inset-0 opacity-10"
                         style="background-image: radial-gradient(circle, white 2px, transparent 2.5px); background-size: 24px 24px;">
@@ -268,10 +274,10 @@
                 </div>
 
                 <!-- Habits List Column -->
-                <div class="flex flex-col gap-6">
+                <div class="flex flex-col gap-4 lg:gap-6 mt-4 lg:mt-0">
                     <!-- Habits List -->
                     <section
-                        class="flex-1 flex flex-col min-h-0 bg-white/50 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/60 shadow-lg h-96">
+                        class="flex-1 flex flex-col min-h-0 bg-white/50 backdrop-blur-xl p-4 lg:p-6 rounded-[2rem] lg:rounded-[2.5rem] border border-white/60 shadow-lg h-96">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-xl font-bold text-slate-800">
                                 <i class="ph-duotone ph-check-circle text-brand-500 mr-2"></i>
@@ -303,11 +309,11 @@
         </div>
 
         <!-- VIEW: STATS (Estadísticas) -->
-        <div id="statsView" class="hidden animate-fade-in">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div id="statsView" class="hidden animate-fade-in p-2 lg:p-0">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-8">
                 <!-- Progress Card -->
                 <div
-                    class="bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-lg border border-white/60 flex flex-col justify-between card-elevated h-fit">
+                    class="bg-white/80 backdrop-blur-xl p-5 lg:p-8 rounded-3xl lg:rounded-[2.5rem] shadow-lg border border-white/60 flex flex-col justify-between card-elevated h-fit">
                     <div>
                         <h3 class="text-xl font-extrabold text-slate-800 mb-6 flex items-center gap-2">
                             <i class="ph-duotone ph-chart-bar text-brand-500"></i>
@@ -354,7 +360,7 @@
 
                 <!-- Daily Progress -->
                 <div
-                    class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 flex flex-col gap-6 relative overflow-hidden h-fit">
+                    class="bg-white rounded-[2rem] p-5 lg:p-6 shadow-sm border border-slate-100 flex flex-col gap-6 relative overflow-hidden h-fit mt-4 lg:mt-0">
                     <div
                         class="absolute right-0 top-0 w-48 h-48 bg-brand-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2">
                     </div>
@@ -380,7 +386,7 @@
 
             <!-- Heat Map Calendar -->
             <div
-                class="bg-white/80 backdrop-blur-xl p-6 rounded-[2.5rem] shadow-lg border border-white/60 mt-8 w-full lg:max-w-4xl mx-auto">
+                class="bg-white/80 backdrop-blur-xl p-4 lg:p-6 rounded-3xl lg:rounded-[2.5rem] shadow-lg border border-white/60 mt-6 lg:mt-8 w-full lg:max-w-4xl mx-auto">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-xl font-extrabold text-slate-800 flex items-center gap-2">
                         <i class="ph-duotone ph-calendar text-brand-500"></i>
@@ -421,10 +427,10 @@
         </div>
 
         <!-- VIEW: PROFILE (Perfil) -->
-        <div id="profileView" class="hidden animate-fade-in space-y-8">
+        <div id="profileView" class="hidden animate-fade-in space-y-6 lg:space-y-8 p-2 lg:p-0">
             <!-- Header -->
             <header
-                class="flex justify-between items-center bg-white/70 backdrop-blur-xl p-6 rounded-[2rem] shadow-sm border border-white/50 mb-12">
+                class="flex justify-between items-center bg-white/70 backdrop-blur-xl p-4 lg:p-6 rounded-2xl lg:rounded-[2rem] shadow-sm border border-white/50 mb-6 lg:mb-12">
                 <h2 class="text-3xl font-extrabold text-slate-800">Mi Perfil</h2>
             </header>
 
@@ -530,6 +536,20 @@
                     <i class="ph-bold ph-sign-out text-xl group-hover:translate-x-1 transition-transform"></i>
                     <span>Cerrar sesión</span>
                 </button>
+            </div>
+        </div>
+
+        <!-- VIEW: SHOP (Tienda) -->
+        <div id="shopView" class="hidden animate-fade-in space-y-8 flex-1 flex-col justify-center items-center h-full p-4">
+            <div class="bg-white rounded-3xl lg:rounded-[2.5rem] p-8 shadow-xl text-center relative overflow-hidden flex flex-col items-center justify-center min-h-[400px] w-full max-w-2xl mx-auto my-auto">
+                <div class="w-32 h-32 bg-brand-50 rounded-full flex items-center justify-center mb-6 shadow-inner border border-brand-100">
+                    <i class="ph-fill ph-storefront text-6xl text-brand-500"></i>
+                </div>
+                <h3 class="text-3xl font-extrabold text-slate-800 mb-4 tracking-tight">Tienda de Accesorios</h3>
+                <p class="text-slate-500 max-w-sm mb-8 text-lg font-medium">Pronto podrás gastar tus monedas obtenidas con tu esfuerzo para personalizar a tu compañero. ¡Mantén tus rachas!</p>
+                <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-8 py-3.5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-yellow-500/30 inline-block">
+                    Muy Pronto
+                </div>
             </div>
         </div>
 
@@ -778,6 +798,11 @@
             class="nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all font-semibold">
             <i class="ph-bold ph-user text-2xl"></i>
             <span class="text-[10px] uppercase tracking-wider mt-1">Perfil</span>
+        </button>
+        <button onclick="changePage('shop')" id="mobile-nav-shop"
+            class="nav-item flex flex-col items-center justify-center py-2 px-4 rounded-2xl text-slate-400 hover:text-slate-800 hover:bg-slate-50 transition-all font-semibold">
+            <i class="ph-bold ph-storefront text-2xl"></i>
+            <span class="text-[10px] uppercase tracking-wider mt-1">Tienda</span>
         </button>
     </nav>
 
