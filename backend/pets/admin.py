@@ -7,17 +7,17 @@ class MascotaAdmin(admin.ModelAdmin):
     """
     Configuración del admin para Mascota.
     """
-    list_display = ('nombre', 'user', 'estado_salud', 'puntos_vida', 'nivel_evolucion', 'ultimo_chequeo')
-    list_filter = ('estado_salud', 'nivel_evolucion', 'fecha_creacion')
+    list_display = ('nombre', 'user', 'nivel', 'total_xp', 'estado_salud', 'puntos_vida', 'ultimo_chequeo')
+    list_filter = ('estado_salud', 'nivel', 'nivel_evolucion', 'fecha_creacion')
     search_fields = ('nombre', 'user__username')
     readonly_fields = ('fecha_creacion', 'ultimo_chequeo')
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('user', 'nombre')
+            'fields': ('user', 'nombre', 'especie')
         }),
-        ('Estado de Salud', {
-            'fields': ('puntos_vida', 'estado_salud', 'nivel_evolucion')
+        ('Estado de Salud y Nivel', {
+            'fields': ('puntos_vida', 'estado_salud', 'nivel', 'total_xp', 'nivel_evolucion')
         }),
         ('Información del Sistema', {
             'fields': ('fecha_creacion', 'ultimo_chequeo'),

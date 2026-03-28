@@ -265,7 +265,12 @@ class HabitLogViewSet(viewsets.ModelViewSet):
             fecha_cumplimiento__gte=start_date,
             fecha_cumplimiento__lte=end_date,
             estado=HabitLog.ESTADO_CUMPLIDO
-        ).values('fecha_cumplimiento').annotate(
+        )
+        
+        # Filtrado adicional si el usuario provee ?habit=X
+        queryset = self.filter_queryset(queryset)
+        
+        queryset = queryset.values('fecha_cumplimiento').annotate(
             count=Count('id')
         )
         

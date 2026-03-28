@@ -600,65 +600,182 @@ function renderHeatMap(data) {
     if (!container) return;
     container.innerHTML = '';
 
+    // We want the last 365 days up to today.
     const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    // Get total days in month
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    // Get starting day (0=Sun, 1=Mon)
-    const firstDayIndex = new Date(currentYear, currentMonth, 1).getDay();
-    // Adjust to Monday start (0=Mon, ... 6=Sun)
-    const startDay = (firstDayIndex + 6) % 7;
+    // Normalize today to start of day
+    today.setHours(0,0,0,0);
+    
+    // Start date is 364 days ago
+    const startDate = new Date(today);
+    startDate.setDate(today.getDate() - 364);
 
-    const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-
-    // Header
-    const header = document.createElement('h3');
-    header.className = "text-sm font-bold text-slate-600 mb-4 capitalize text-center";
-    header.textContent = `${monthNames[currentMonth]} ${currentYear}`;
-    container.appendChild(header);
-
-    // Grid
-    // We need a specific container for the grid to behave like a calendar
+    // Grid container with horizontal scrolling
     const grid = document.createElement('div');
-    grid.className = "grid grid-cols-7 gap-2 max-w-xs mx-auto";
+    grid.className = "grid grid-rows-7 grid-flow-col gap-1 auto-cols-min min-w-max mb-2";
 
-    // Headers (L M M J V S D)
-    const days = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
-    days.forEach(d => {
-        const dh = document.createElement('div');
-        dh.className = "text-xs font-bold text-slate-400 text-center";
-        dh.textContent = d;
-        grid.appendChild(dh);
-    });
-
-    // Paddiing
-    for (let i = 0; i < startDay; i++) {
+    // Padding for the first column so the day of week aligns
+    // the row index is determined by the day of the week.
+    // CSS grid grid-flow-col fills top-to-bottom. We want 7 rows.
+    // Mon=0, Tue=1, ... Sun=6
+    const firstDayIndex = (startDate.getDay() + 6) % 7;
+    for (let i = 0; i < firstDayIndex; i++) {
         const empty = document.createElement('div');
+        empty.className = "w-3 h-3 bg-transparent";
         grid.appendChild(empty);
     }
 
-    // Days
-    for (let day = 1; day <= daysInMonth; day++) {
-        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    // Days calculation
+    for (let i = 0; i < 365; i++) {
+        const d = new Date(startDate);
+        d.setDate(startDate.getDate() + i);
+        
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const count = data[dateStr] || 0;
-        const isToday = (day === today.getDate());
+        
+        const isToday = (i === 364);
 
         const cell = document.createElement('div');
-        // Use standard rounded square look
-        cell.className = `w-full aspect-square rounded cursor-pointer transition-transform hover:scale-110 ${getColorForCount(count)} ${isToday ? 'ring-2 ring-brand-400 ring-offset-2' : ''}`;
-        cell.title = `${dateStr}: ${count}`;
+        cell.className = `w-3 h-3 rounded-sm cursor-pointer transition-transform hover:scale-125 ${getColorForCount(count)} ${isToday ? 'ring-2 ring-brand-400 ring-offset-1 z-10' : ''}`;
+        cell.title = `${dateStr}: ${count} completados`;
         grid.appendChild(cell);
     }
-
+    
+    // Put grid in a wrapper with x-scroll (handled by parent html already, but we ensure it)
     container.appendChild(grid);
 }
 
+let habitHeatmapsLoaded = false;
+async function toggleHabitHeatmaps() {
+    const container = document.getElementById('habitHeatmapsContainer');
+    const btn = document.getElementById('btnToggleDetails');
+    if (container.classList.contains('hidden')) {
+        container.classList.remove('hidden');
+        btn.innerHTML = `<i class="ph-bold ph-caret-up"></i> Ocultar Detalles`;
+        if (!habitHeatmapsLoaded) {
+            await renderHabitHeatmaps();
+            habitHeatmapsLoaded = true;
+        }
+    } else {
+        container.classList.add('hidden');
+        btn.innerHTML = `<i class="ph-bold ph-chart-bar"></i> Ver Detalles por Hábito`;
+    }
+}
+
+async function renderHabitHeatmaps() {
+    const container = document.getElementById('habitHeatmapsContainer');
+    container.innerHTML = '<div class="text-center text-xs text-slate-400 py-4"><i class="ph-bold ph-spinner animate-spin"></i> Cargando de la API...</div>';
+    
+    try {
+        const res = await authenticatedFetch(`${API_BASE_URL}/habits/activos/`);
+        if (!res || res.length === 0) {
+            container.innerHTML = '<div class="text-xs text-slate-400 text-center py-4">No hay hábitos activos para mostrar.</div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        
+        // Colors palette to iterate:
+        const colors = [
+            // color base, intensity 200, 400, 600
+            { bg: 'bg-green-100', c2: 'bg-green-200', c4: 'bg-green-400', c6: 'bg-green-600', text: 'text-green-600' },
+            { bg: 'bg-blue-100', c2: 'bg-blue-200', c4: 'bg-blue-400', c6: 'bg-blue-600', text: 'text-blue-600' },
+            { bg: 'bg-purple-100', c2: 'bg-purple-200', c4: 'bg-purple-400', c6: 'bg-purple-600', text: 'text-purple-600' },
+            { bg: 'bg-orange-100', c2: 'bg-orange-200', c4: 'bg-orange-400', c6: 'bg-orange-600', text: 'text-orange-600' },
+            { bg: 'bg-pink-100', c2: 'bg-pink-200', c4: 'bg-pink-400', c6: 'bg-pink-600', text: 'text-pink-600' },
+            { bg: 'bg-teal-100', c2: 'bg-teal-200', c4: 'bg-teal-400', c6: 'bg-teal-600', text: 'text-teal-600' }
+        ];
+
+        // Fetch heatmap data for each habit
+        for (let i = 0; i < res.length; i++) {
+            const habit = res[i];
+            const data = await authenticatedFetch(`${API_BASE_URL}/habit-logs/heatmap/?habit=${habit.id}`);
+            
+            const colorSet = colors[i % colors.length];
+            
+            // Re-use logic for category icon
+            let iconClass = 'ph-star';
+            const cats = {
+                'salud': { icon: 'ph-heartbeat'},
+                'ejercicio': { icon: 'ph-barbell'},
+                'estudio': { icon: 'ph-book-open'},
+                'trabajo': { icon: 'ph-briefcase'},
+                'tarea': { icon: 'ph-check-square'},
+                'arte': { icon: 'ph-paint-brush'},
+            };
+            if (cats[habit.categoria]) {
+                iconClass = cats[habit.categoria].icon;
+            }
+
+            // Create habit card
+            const card = document.createElement('div');
+            card.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 w-full overflow-hidden";
+            
+            // Header
+            card.innerHTML = `
+                <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg ${colorSet.bg} ${colorSet.text} flex items-center justify-center">
+                            <i class="ph-fill ${iconClass}"></i>
+                        </div>
+                        <h4 class="font-bold text-slate-700 text-sm truncate max-w-[150px]">${habit.nombre}</h4>
+                    </div>
+                    <div class="flex items-center gap-1 bg-orange-50 text-orange-600 px-2 py-1 rounded-lg text-xs font-black shrink-0">
+                        <i class="ph-fill ph-fire"></i> ${habit.racha_actual}
+                    </div>
+                </div>
+            `;
+            
+            // Heatmap grid
+            const gridWrap = document.createElement('div');
+            gridWrap.className = "overflow-x-auto pb-2"
+            
+            const grid = document.createElement('div');
+            grid.className = "grid grid-rows-7 grid-flow-col gap-1 auto-cols-min min-w-max";
+            
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            const startDate = new Date(today);
+            startDate.setDate(today.getDate() - 364);
+            const firstDayIndex = (startDate.getDay() + 6) % 7;
+            for (let pad = 0; pad < firstDayIndex; pad++) {
+                const empty = document.createElement('div');
+                empty.className = "w-2.5 h-2.5 bg-transparent";
+                grid.appendChild(empty);
+            }
+            
+            for (let d_idx = 0; d_idx < 365; d_idx++) {
+                const d = new Date(startDate);
+                d.setDate(startDate.getDate() + d_idx);
+                const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+                const count = data[dateStr] || 0;
+                
+                let cellColor = 'bg-slate-100'; // empty
+                if (count > 0) {
+                    if (count <= 1) cellColor = colorSet.c2;
+                    else if (count <= 2) cellColor = colorSet.c4;
+                    else cellColor = colorSet.c6;
+                }
+                
+                const cell = document.createElement('div');
+                cell.className = `w-2.5 h-2.5 rounded-sm ${cellColor} hover:scale-125 transition-transform cursor-pointer shadow-sm`;
+                cell.title = `${dateStr}`;
+                grid.appendChild(cell);
+            }
+            
+            gridWrap.appendChild(grid);
+            card.appendChild(gridWrap);
+            container.appendChild(card);
+        }
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div class="text-xs text-red-500 text-center py-4">Error cargando heatmaps.</div>';
+    }
+}
 function getColorForCount(count) {
     if (count === 0) return 'bg-slate-100';
-    if (count <= 2) return 'bg-emerald-200';
-    if (count <= 4) return 'bg-emerald-400';
-    return 'bg-emerald-600';
+    if (count <= 2) return 'bg-emerald-300';
+    if (count <= 4) return 'bg-emerald-500';
+    return 'bg-emerald-700';
 }
 
 function toggleModal() {
@@ -817,8 +934,11 @@ async function fetchProfileData() {
         const emailEl = document.getElementById('profileEmail');
         if (emailEl) emailEl.textContent = profile.email || 'No email';
         document.getElementById('profileJoinDate').textContent = new Date(profile.fecha_creacion).toLocaleDateString();
-        document.getElementById('profileLevel').textContent = profile.nivel;
-        document.getElementById('profileXP').textContent = profile.total_xp;
+        document.getElementById('profileLevel').textContent = profile.nivel || petNivelReal;
+        
+        // El usuario solicitó XP historial acumulado con sus mascotas
+        document.getElementById('profileXP').textContent = petXpTotal;
+        
         document.getElementById('profileCoins').textContent = profile.coins;
         document.getElementById('profilePetInfo').textContent = petText;
 
