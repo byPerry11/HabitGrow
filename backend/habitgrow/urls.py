@@ -37,6 +37,12 @@ urlpatterns = [
     path('users/', include('users.urls')),
 ]
 
-# --- SERVIR ARCHIVOS MEDIA EN DESARROLLO --- #
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# --- SERVIR ARCHIVOS MEDIA EN DESARROLLO Y MVP DE PRODUCCIÓN --- #
+from django.urls import re_path
+from django.views.static import serve
+
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {
+        'document_root': settings.MEDIA_ROOT,
+    }),
+]

@@ -28,22 +28,24 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-18re_67-b3!i1ox$q5njv
 DEBUG = config('DEBUG', default=True, cast=bool)
 
 # Hosts permitidos en producción
-ALLOWED_HOSTS = [
-    'habitgrowtracking.com',
-    'www.habitgrowtracking.com',
-    '2.57.91.91',  # Tu IP
-    'localhost',
-    '127.0.0.1',
-]
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS', 
+    default='habitgrowtracking.com,www.habitgrowtracking.com,2.57.91.91,localhost,127.0.0.1', 
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 # Muy importante para que el panel de administración y los formularios funcionen con HTTPS
-CSRF_TRUSTED_ORIGINS = [
-    'https://habitgrowtracking.com',
-    'https://www.habitgrowtracking.com'
-]
+CSRF_TRUSTED_ORIGINS = config(
+    'CSRF_TRUSTED_ORIGINS', 
+    default='https://habitgrowtracking.com,https://www.habitgrowtracking.com', 
+    cast=lambda v: [s.strip() for s in v.split(',')]
+)
 
 # Si usas un Proxy (como el que trae Dokploy)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
 
 
 # Application definition
@@ -191,11 +193,11 @@ REST_FRAMEWORK = {
 
 CORS_ALLOWED_ORIGINS = config(
     'CORS_ALLOWED_ORIGINS',
-    default='http://localhost:3000,http://localhost:19006',
+    default='http://localhost:3000,http://localhost:19006,https://habitgrowtracking.com,https://www.habitgrowtracking.com',
     cast=lambda v: [s.strip() for s in v.split(',')]
 )
 
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = config('CORS_ALLOW_ALL_ORIGINS', default=False, cast=bool)
 CORS_ALLOW_CREDENTIALS = True
 
 
