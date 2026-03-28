@@ -160,10 +160,7 @@ async function handleGoogleLogin(response) {
                 window.location.href = 'dashboard.html';
             }, 1200);
         } else {
-            // Log completo para diagnóstico
-            console.error('❌ Google Auth Error Detail:', data.detail || data.error);
-            console.error('❌ Google Auth Trace:', data.trace);
-            showToast(data.detail || data.error || 'Error al iniciar sesión con Google', 'error');
+            showToast(data.error || 'Error al iniciar sesión con Google', 'error');
             if (googleBtn && originalContent) resetBtn(googleBtn, originalContent);
         }
     } catch (error) {

@@ -13,7 +13,6 @@ Flujo:
 """
 
 import re
-import traceback
 from django.contrib.auth.models import User
 from django.conf import settings
 from rest_framework import status
@@ -26,7 +25,6 @@ from google.auth.transport import requests as google_requests
 
 from .serializers import UserSerializer
 
-# Google Client ID configurado en settings.py
 GOOGLE_CLIENT_ID = getattr(settings, 'GOOGLE_CLIENT_ID', '')
 
 
@@ -41,16 +39,6 @@ class GoogleLoginAPIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        try:
-            return self._handle_google_login(request)
-        except Exception as e:
-            return Response({
-                'error': 'Error interno del servidor',
-                'detail': str(e),
-                'trace': traceback.format_exc(),
-            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-    def _handle_google_login(self, request):
         credential = request.data.get('id_token')
 
         if not credential:
@@ -72,7 +60,7 @@ class GoogleLoginAPIView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED
             )
 
-        # Extraer datos del usuario desde el token verificado
+        # Extraer datos del token verificado
         google_user_id = idinfo['sub']
         email = idinfo.get('email', '').lower()
         first_name = idinfo.get('given_name', '')
@@ -94,12 +82,10 @@ class GoogleLoginAPIView(APIView):
             user = profile.user
 
         except User.DoesNotExist:
-            # 3) Buscar por email (usuario registrado clásico → vincular)
+            # 3) Buscar por email (cuenta existente → vincular)
             try:
                 user = User.objects.get(email=email)
                 profile = user.profile
-
-                # Vincular Google ID al perfil existente
                 profile.google_id = google_user_id
                 if google_avatar and not profile.profile_picture:
                     profile.google_avatar = google_avatar
@@ -109,7 +95,6 @@ class GoogleLoginAPIView(APIView):
                 # 4) Nuevo usuario → crear desde cero
                 created = True
                 username = self._generate_username(email, first_name)
-
                 user = User.objects.create_user(
                     username=username,
                     email=email,
@@ -122,13 +107,13 @@ class GoogleLoginAPIView(APIView):
                 profile.google_avatar = google_avatar
                 profile.save()
 
-        # Actualizar nombre si cambió en Google
+        # Sincronizar nombre si cambió en Google
         if first_name and user.first_name != first_name:
             user.first_name = first_name
             user.last_name = last_name
             user.save()
 
-        # 5) Generar/recuperar Token DRF
+        # 5) Token DRF
         token, _ = Token.objects.get_or_create(user=user)
 
         return Response({
@@ -138,10 +123,7 @@ class GoogleLoginAPIView(APIView):
         }, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
     def _generate_username(self, email: str, first_name: str) -> str:
-        """
-        Genera un nombre de usuario único a partir del email o nombre de Google.
-        Si ya existe, añade un número incremental.
-        """
+        """Genera username único a partir del email."""
         base = re.sub(r'[^a-zA-Z0-9]', '', email.split('@')[0]) or 'usuario'
         username = base
         counter = 1
