@@ -14,6 +14,7 @@ Flujo:
 
 import re
 import logging
+from django.utils.crypto import get_random_string
 
 logger = logging.getLogger(__name__)
 from django.contrib.auth.models import User
@@ -113,7 +114,7 @@ class GoogleLoginAPIView(APIView):
                     email=email,
                     first_name=first_name,
                     last_name=last_name,
-                    password=User.objects.make_random_password()
+                    password=get_random_string(32)
                 )
                 profile = user.profile
                 profile.google_id = google_user_id
