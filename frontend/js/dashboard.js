@@ -139,9 +139,9 @@ function renderPet(mascota) {
     const infoContainer = document.getElementById('petInfoContainer');
     if (infoContainer) infoContainer.classList.remove('hidden');
 
-    // Actualizar nombre en el badge y título
+    // Actualizar nivel en el badge y nombre en el título
     const badgeEl = document.getElementById('petBadgeName');
-    if (badgeEl) badgeEl.textContent = mascota.nombre || 'Compañero';
+    if (badgeEl) badgeEl.textContent = `NIVEL ${mascota.nivel || 1}`;
 
     const petNameEl = document.getElementById('petName');
     if (petNameEl) petNameEl.textContent = mascota.nombre || 'Tu Mascota';
