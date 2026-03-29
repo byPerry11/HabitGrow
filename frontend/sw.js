@@ -1,12 +1,14 @@
 // ─── HabitGrow Service Worker ───────────────────────────────────────────────
 // Incrementa CACHE_VERSION en cada deploy para invalidar caché anterior.
-const CACHE_VERSION = 'mn728rcu';
+const CACHE_VERSION = 'anim001';
 const CACHE_NAME = `habitgrow-cache-${CACHE_VERSION}`;
 
 // Assets que se pre-cachean (solo imágenes y recursos lentos)
 const PRECACHE_ASSETS = [
   './assets/icon.png',
-  './assets/mascotas/Gizzmo/Idle.jpg'
+  './assets/mascotas/Gizzmo/Idle.jpg',
+  './assets/mascotas/Gizzmo/animations/tap.webp',
+  './js/petAnimator.js'
 ];
 
 // ── INSTALL: pre-cachear solo assets pesados ─────────────────────────────────

@@ -131,6 +131,9 @@ async function fetchMascota() {
 }
 
 // Renderizar datos de la mascota en la interfaz
+// — Variable global para el animator
+let petAnimator = null;
+
 function renderPet(mascota) {
     // Mostrar contenedores de salud e información
     const healthContainer = document.getElementById('petHealthContainer');
@@ -200,8 +203,84 @@ function renderPet(mascota) {
 
     petContainer.innerHTML = `
         <img src="${imagePath}" alt="${mascota.nombre}" 
-             class="w-64 h-64 object-contain animate-float drop-shadow-2xl">
+             class="w-64 h-64 object-contain animate-float drop-shadow-2xl pointer-events-none">
     `;
+
+    // ── Sprite Animator Setup ──
+    // Destruir instancia anterior si existe
+    if (petAnimator) {
+        petAnimator.destroy();
+        petAnimator = null;
+    }
+
+    // Crear nueva instancia con animaciones disponibles
+    petAnimator = new PetAnimator(petContainer, {
+        basePath: 'assets/mascotas/Gizzmo/animations',
+        animations: {
+            tap: { frames: 60, frameW: 320, frameH: 180, fps: 24, loop: false }
+            // Futuras: idle, happy, evolve, eat, sleep...
+        }
+    });
+
+    // Pre-cargar la animación tap en background
+    petAnimator.preload('tap').catch(() => {
+        console.warn('No se pudo precargar animación tap');
+    });
+
+    // ── Click / Touch → reproducir animación ──
+    petContainer.onclick = (e) => {
+        // No activar si es el huevo (sin mascota)
+        if (!state.pet || !state.pet.nombre) return;
+        // No activar si ya está reproduciendo
+        if (petAnimator._isPlaying) return;
+
+        e.stopPropagation();
+
+        // Efecto de partículas ✨
+        _spawnTapParticles(petContainer, e);
+
+        // Reproducir animación tap
+        petAnimator.play('tap', () => {
+            // Al terminar, restaurar la imagen estática
+            petAnimator.restore();
+        });
+    };
+}
+
+/**
+ * Efectos de partículas al tocar la mascota.
+ */
+function _spawnTapParticles(container, event) {
+    const rect = container.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    const emojis = ['✨', '💖', '⭐', '🎉', '💛'];
+
+    for (let i = 0; i < 5; i++) {
+        const particle = document.createElement('span');
+        particle.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+        particle.style.cssText = `
+            position: absolute;
+            left: ${x}px;
+            top: ${y}px;
+            font-size: ${14 + Math.random() * 10}px;
+            pointer-events: none;
+            z-index: 50;
+            transition: all 0.8s cubic-bezier(.25,.46,.45,.94);
+            opacity: 1;
+        `;
+        container.appendChild(particle);
+
+        // Animar después de insertar
+        requestAnimationFrame(() => {
+            particle.style.transform = `translate(${(Math.random() - 0.5) * 80}px, ${-40 - Math.random() * 60}px) scale(0.3)`;
+            particle.style.opacity = '0';
+        });
+
+        // Limpiar
+        setTimeout(() => particle.remove(), 900);
+    }
 }
 
 function renderNoPet() {
