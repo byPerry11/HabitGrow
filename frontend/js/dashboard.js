@@ -216,7 +216,7 @@ function renderPet(mascota) {
         petAnimator = new PetAnimator(petContainer, {
             basePath: 'assets/mascotas/Gizzmo/animations',
             animations: {
-                tap: { frames: 60, frameW: 640, frameH: 360, cols: 10, fps: 48, loop: false }
+                tap: { frames: 60, frameW: 687, frameH: 570, cols: 10, fps: 48, loop: false }
                 // Futuras: idle, happy, evolve, eat, sleep...
             }
         });
