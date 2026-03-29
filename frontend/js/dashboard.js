@@ -91,21 +91,32 @@ async function fetchProfile() {
 
         // Actualizar imagen de perfil (URL dinámica según entorno)
         const profilePic = document.getElementById('headerProfilePic');
+        const profilePagePic = document.getElementById('profilePagePic');
         if (profilePic) {
-            if (data.profile_picture) {
-                // Si la URL ya es absoluta (empieza con 'http') la usa directo
-                // Si es relativa (ej: /media/...) construye la base correcta
-                const apiBase = API_BASE_URL.replace('/api/v1', '');
-                profilePic.src = data.profile_picture.startsWith('http')
-                    ? data.profile_picture
-                    : `${apiBase}${data.profile_picture}`;
-            } else {
-                // Fallback: avatar generado con las iniciales del usuario
-                profilePic.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=10b981&color=fff`;
-            }
+            const imgSrc = data.profile_picture 
+                ? (data.profile_picture.startsWith('http') ? data.profile_picture : `${API_BASE_URL.replace('/api/v1', '')}${data.profile_picture}`)
+                : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=10b981&color=fff`;
+            
+            profilePic.src = imgSrc;
+            if (profilePagePic) profilePagePic.src = imgSrc;
         }
 
-        // NOTA: XP y Nivel ahora se obtienen desde la mascota (ver renderPet)
+        // Actualizar datos del perfil en la vista de perfil
+        const profileEmail = document.getElementById('profileEmail');
+        if (profileEmail) profileEmail.textContent = data.email;
+        
+        const profileJoinDate = document.getElementById('profileJoinDate');
+        if (profileJoinDate && data.date_joined) {
+            const date = new Date(data.date_joined);
+            const options = { month: 'long', year: 'numeric' };
+            profileJoinDate.textContent = date.toLocaleDateString('es-ES', options);
+        }
+
+        const profileCoins = document.getElementById('profileCoins');
+        if (profileCoins) profileCoins.textContent = data.coins || 0;
+        
+        // Actualizar todas las visualizaciones de monedas
+        document.querySelectorAll('.userCoinsDisplay').forEach(el => el.textContent = data.coins || 0);
     }
 }
 
@@ -241,6 +252,67 @@ function renderPet(mascota) {
     } else {
         petContainer.onclick = null;
     }
+
+    // Actualizar diálogo de la mascota (Proactividad)
+    updatePetDialogue(mascota);
+}
+
+/**
+ * Lógica de Diálogo Proactivo (Híbrido A+C)
+ */
+function updatePetDialogue(mascota) {
+    const bubble = document.getElementById('petBubble');
+    const messageEl = document.getElementById('petMessage');
+    if (!bubble || !messageEl) return;
+
+    const evolutionLevel = mascota.nivel_evolucion || 1;
+    const isBaby = evolutionLevel < 5;
+    
+    // 1. Analizar hábitos del día
+    const activeHabits = state.habits.filter(h => h.activo);
+    const pendingHabits = activeHabits.filter(h => !h.completado_hoy);
+    
+    let message = "";
+    
+    if (activeHabits.length === 0) {
+        message = isBaby ? "🌱?" : "¡Hola! ¿Aún no tenemos metas para hoy?";
+    } else if (pendingHabits.length === 0) {
+        message = isBaby ? "✨💖" : "¡Lo logramos! El jardín se ve radiante hoy.";
+    } else {
+        // Encontrar el hábito más descuidado de alta prioridad
+        // Prioridad: salud > ejercicio > estudio > otros
+        const categoryPriority = { 'salud': 1, 'ejercicio': 2, 'estudio': 3, 'trabajo': 4, 'tarea': 5, 'arte': 6 };
+        
+        const nextHabit = pendingHabits.sort((a, b) => {
+            const pA = categoryPriority[a.categoria] || 99;
+            const pB = categoryPriority[b.categoria] || 99;
+            return pA - pB;
+        })[0];
+
+        // Definir texto según evolución
+        if (isBaby) {
+            const emojis = { 'salud': '💧', 'ejercicio': '⚡', 'estudio': '📚', 'trabajo': '💼', 'tarea': '✅', 'arte': '🎨' };
+            message = `${emojis[nextHabit.categoria] || '🌟'}?`;
+        } else {
+            const dialogues = {
+                'salud': ["¿Tomamos un poco de agua?", "Tu salud es lo primero.", "Me vendría bien un respiro saludable."],
+                'ejercicio': ["¡A mover el cuerpo!", "¿Sentimos la energía hoy?", "Un poco de movimiento nos hará bien."],
+                'estudio': ["¿Qué aprenderemos hoy?", "El conocimiento es luz.", "¡Es hora de concentrarse!"],
+                'default': ["¿Seguimos cultivando hábitos?", "Paso a paso llegaremos lejos.", "¡Tú puedes con ese hábito!"]
+            };
+            const options = dialogues[nextHabit.categoria] || dialogues['default'];
+            message = options[Math.floor(Math.random() * options.length)];
+        }
+    }
+
+    // Mostrar burbuja
+    messageEl.textContent = message;
+    bubble.classList.add('show');
+
+    // Ocultar después de unos segundos si no es importante
+    setTimeout(() => {
+        bubble.classList.remove('show');
+    }, 6000);
 }
 
 /**
@@ -371,7 +443,7 @@ async function adoptPet(name, especie) {
         fetchMascota();
     } catch (e) {
         console.error('❌ [DEBUG] Error adopting pet:', e);
-        alert("Error adoptando mascota: " + (e.message || "revisa la consola"));
+        showToast("Error adoptando mascota", "error");
     }
 }
 
@@ -504,7 +576,17 @@ function renderHabitsList() {
                         <i class="ph-fill ${iconClass}"></i>
                      </div>
                      <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-slate-800 text-sm truncate ${isCompleted ? 'line-through text-slate-400' : ''}">${habit.nombre}</h4>
+                        <div class="flex items-center gap-2">
+                            <h4 class="font-bold text-slate-800 text-sm truncate ${isCompleted ? 'line-through text-slate-400' : ''}">${habit.nombre}</h4>
+                            <div class="hidden group-hover:flex items-center gap-1">
+                                <button onclick="editHabit(${habit.id})" class="text-slate-300 hover:text-brand-500 transition-colors p-1" title="Editar">
+                                    <i class="ph-bold ph-pencil-simple text-xs"></i>
+                                </button>
+                                <button onclick="deleteHabit(${habit.id})" class="text-slate-300 hover:text-red-500 transition-colors p-1" title="Eliminar">
+                                    <i class="ph-bold ph-trash text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
                         <p class="text-[10px] text-slate-400 mt-0.5 font-bold uppercase">${categoryName} • Racha: ${habit.racha_actual} 🔥</p>
                      </div>
                      
@@ -546,18 +628,15 @@ async function uploadProfilePicture(input) {
         if (uploadResponse.ok) {
             const data = await uploadResponse.json();
             if (data.profile_picture) {
-                const profileImages = document.querySelectorAll('#profileImage, #mobileProfileImage');
                 fetchProfile();
             }
-            alert('Foto actualizada con éxito');
+            showToast('Foto actualizada con éxito', 'success');
         } else {
-            console.error('Upload failed', await uploadResponse.text());
-            alert('Error subiendo la imagen');
+            showToast('Error subiendo la imagen', 'error');
         }
 
     } catch (error) {
-        console.error('Error uploading profile picture:', error);
-        alert('Error conectando con el servidor');
+        showToast('Error conectando con el servidor', 'error');
     }
 }
 
@@ -574,21 +653,85 @@ async function toggleHabit(id) {
             // API returns { message, habit: {...}, log: {...} } or similar?
             // Let's check views.py: returns serializer.data (HabitSerializer) in 'habit' key.
             state.habits[index] = response.habit;
+            
+            // Si el mensaje indica que se completó, mostrar brindis
+            if (response.completado_hoy) {
+                showToast(response.mensaje, "success");
+            } else {
+                showToast(response.mensaje, "info");
+            }
+
             renderHabitsList();
             updateStats();
+
+            // Actualizar diálogo de la mascota tras la acción
+            updatePetDialogue(state.pet);
 
             // Re-fetch profile/pet to prevent drift in Coins/XP/HP
             fetchProfile();
             fetchMascota();
         }
     } catch (error) {
-        console.error('Error toggling habit:', error);
-        alert('Error conectando con el servidor');
+        showToast('Error al actualizar progreso', 'error');
     }
 }
 
-async function handleNewHabit(e) {
+/**
+ * Borrado Lógico de Hábito (activo=False)
+ */
+async function deleteHabit(id) {
+    if (!confirm('¿Quieres dejar de seguir este hábito? (Se ocultará del listado)')) return;
+
+    try {
+        const response = await authenticatedFetch(`${API_BASE_URL}/habits/${id}/toggle_activo/`, {
+            method: 'POST'
+        });
+
+        if (response && response.habit) {
+            // Eliminar del estado local para que desaparezca
+            state.habits = state.habits.filter(h => h.id !== id);
+            renderHabitsList();
+            updateStats();
+            showToast('Hábito ocultado correctamente', 'info');
+        }
+    } catch (error) {
+        showToast('Error al ocultar el hábito', 'error');
+    }
+}
+
+/**
+ * Cargar datos del hábito en el modal para editar
+ */
+function editHabit(id) {
+    const habit = state.habits.find(h => h.id === id);
+    if (!habit) return;
+
+    // Cambiar UI del modal
+    document.getElementById('modalTitle').textContent = "Editar Hábito";
+    document.getElementById('submitBtnText').textContent = "Guardar Cambios";
+    document.getElementById('editHabitId').value = id;
+
+    // Rellenar campos
+    document.getElementById('habitInput').value = habit.nombre;
+    document.getElementById('stepsInput').value = habit.total_pasos || 1;
+    document.getElementById('stepsValueDisplay').textContent = `${habit.total_pasos || 1} paso(s)`;
+
+    // Categoría
+    const catRadio = document.querySelector(`input[name="category"][value="${habit.categoria}"]`);
+    if (catRadio) catRadio.checked = true;
+
+    // Días
+    const days = habit.dias_semana ? habit.dias_semana.split(',') : [];
+    document.querySelectorAll('input[name="days"]').forEach(cb => {
+        cb.checked = days.includes(cb.value);
+    });
+
+    toggleModal();
+}
+
+async function handleHabitSubmit(e) {
     e.preventDefault();
+    const editId = document.getElementById('editHabitId').value;
     const nameInput = document.getElementById('habitInput');
     const categoryInput = document.querySelector('input[name="category"]:checked');
     const stepsInput = document.getElementById('stepsInput');
@@ -598,7 +741,7 @@ async function handleNewHabit(e) {
     const selectedDays = Array.from(checkedDays).map(cb => cb.value).join(',') || "0,1,2,3,4,5,6";
 
     if (!nameInput.value || !categoryInput) {
-        alert("Por favor completa el nombre y la categoría");
+        showToast("Completa nombre y categoría", "warning");
         return;
     }
 
@@ -611,29 +754,80 @@ async function handleNewHabit(e) {
             activo: true
         };
 
-        const newHabit = await authenticatedFetch(`${API_BASE_URL}/habits/`, {
-            method: 'POST',
+        const url = editId ? `${API_BASE_URL}/habits/${editId}/` : `${API_BASE_URL}/habits/`;
+        const method = editId ? 'PATCH' : 'POST';
+
+        const result = await authenticatedFetch(url, {
+            method: method,
             body: JSON.stringify(payload)
         });
 
-        if (newHabit) {
-            if (!Array.isArray(state.habits)) state.habits = [];
-            state.habits.push(newHabit);
+        if (result) {
+            if (editId) {
+                const idx = state.habits.findIndex(h => h.id == editId);
+                if (idx !== -1) state.habits[idx] = result;
+                showToast("Hábito actualizado", "success");
+            } else {
+                if (!Array.isArray(state.habits)) state.habits = [];
+                state.habits.push(result);
+                showToast("¡Hábito creado con éxito!", "success");
+            }
+            
             renderHabitsList();
             updateStats();
-
-            toggleModal(); // Close
-            nameInput.value = ''; // Reset
-            if (stepsInput) {
-                stepsInput.value = 1;
-                document.getElementById('stepsValueDisplay').textContent = "1 paso";
-            }
-            // Reset category?
+            toggleModal();
         }
     } catch (error) {
-        console.error('Error creating habit:', error);
-        alert('Error creando el hábito');
+        showToast('Error al procesar el hábito', 'error');
     }
+}
+
+/**
+ * Sistema Global de Toasts
+ */
+function showToast(message, type = 'info', duration = 3000) {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    // Icon mapping
+    const icons = {
+        'success': 'ph-check-circle',
+        'error': 'ph-warning-octagon',
+        'info': 'ph-info',
+        'warning': 'ph-warning'
+    };
+
+    const title = {
+        'success': '¡Genial!',
+        'error': 'Error',
+        'info': 'Información',
+        'warning': 'Atención'
+    };
+
+    toast.innerHTML = `
+        <div class="toast-icon">
+            <i class="ph-fill ${icons[type] || 'ph-info'}"></i>
+        </div>
+        <div class="toast-content">
+            <div class="toast-title">${title[type]}</div>
+            <div class="toast-message">${message}</div>
+        </div>
+        <div class="toast-progress" style="--duration: ${duration}ms"></div>
+    `;
+
+    container.appendChild(toast);
+
+    // Initial micro-task to allow transition from translateX(120%)
+    setTimeout(() => toast.classList.add('show'), 10);
+
+    // Auto-remove
+    setTimeout(() => {
+        toast.classList.add('hide');
+        setTimeout(() => toast.remove(), 500);
+    }, duration);
 }
 
 function updateStats() {
@@ -904,14 +1098,20 @@ function getColorForCount(count) {
 function toggleModal() {
     const modal = document.getElementById('habitModal');
     const content = document.getElementById('modalContent');
-    const input = document.getElementById('habitInput');
+    const isHidden = modal.classList.contains('hidden');
 
-    if (modal.classList.contains('opacity-0')) {
+    if (isHidden) {
+        // Al abrir, si no hay ID de edición secreto, es un nuevo hábito
+        const editId = document.getElementById('editHabitId').value;
+        if (!editId) {
+            resetModal();
+        }
         modal.classList.remove('hidden');
         setTimeout(() => {
             modal.classList.remove('opacity-0', 'pointer-events-none');
             content.classList.remove('scale-95');
             content.classList.add('scale-100');
+            const input = document.getElementById('habitInput');
             if (input) input.focus();
         }, 10);
     } else {
@@ -920,8 +1120,35 @@ function toggleModal() {
         content.classList.add('scale-95');
         setTimeout(() => {
             modal.classList.add('hidden');
+            resetModal(); // Limpiar siempre al cerrar
         }, 300);
     }
+}
+
+function resetModal() {
+    const title = document.getElementById('modalTitle');
+    const btnText = document.getElementById('submitBtnText');
+    if (title) title.textContent = "Nuevo Hábito";
+    if (btnText) btnText.textContent = "Crear";
+    
+    const editIdInput = document.getElementById('editHabitId');
+    if (editIdInput) editIdInput.value = "";
+    
+    const nameInput = document.getElementById('habitInput');
+    if (nameInput) nameInput.value = "";
+    
+    const stepsInput = document.getElementById('stepsInput');
+    if (stepsInput) stepsInput.value = 1;
+
+    const stepsDisplay = document.getElementById('stepsValueDisplay');
+    if (stepsDisplay) stepsDisplay.textContent = "1 paso";
+
+    // Check first category by default
+    const firstCat = document.querySelector('input[name="category"]');
+    if (firstCat) firstCat.checked = true;
+
+    // Check all days by default
+    document.querySelectorAll('input[name="days"]').forEach(cb => cb.checked = true);
 }
 
 function changePage(page) {

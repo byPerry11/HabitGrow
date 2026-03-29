@@ -15,6 +15,9 @@
     <meta name="theme-color" content="#10b981">
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="css/toasts.css">
+    <link rel="stylesheet" href="css/pet-interactions.css">
 
     <script>
         tailwind.config = {
@@ -254,8 +257,11 @@
                     </div>
 
                     <!-- Centered Pet Visual -->
-                    <div class="absolute inset-0 flex items-center justify-center cursor-pointer"
-                        id="petContainer">
+                    <div class="absolute inset-0 flex items-center justify-center cursor-pointer" id="petContainer">
+                        <!-- Thought Bubble (Dialogue) -->
+                        <div id="petBubble" class="thought-bubble">
+                            <p id="petMessage">¡Hola! ¿Qué haremos hoy?</p>
+                        </div>
                         <!-- Pet image / animation injected by JS -->
                     </div>
 
@@ -455,8 +461,12 @@
                         </div>
                         <h3 id="profileName" class="text-2xl font-extrabold text-slate-800 mt-4">Usuario</h3>
                         <p id="profileEmail" class="text-slate-500 font-medium">user@example.com</p>
-                        <p class="text-xs text-slate-400 mt-2 uppercase tracking-wider font-bold">Miembro desde <span
-                                id="profileJoinDate">...</span></p>
+                        <div class="mt-4 flex flex-col items-center gap-1">
+                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold flex items-center gap-1">
+                                <i class="ph-bold ph-calendar"></i> Miembro desde
+                            </p>
+                            <p id="profileJoinDate" class="text-sm font-bold text-slate-600">...</p>
+                        </div>
                     </div>
                 </div>
 
@@ -540,20 +550,98 @@
         </div>
 
         <!-- VIEW: SHOP (Tienda) -->
-        <div id="shopView" class="hidden animate-fade-in space-y-8 flex-1 flex-col justify-center items-center h-full p-4">
-            <div class="bg-white rounded-3xl lg:rounded-[2.5rem] p-8 shadow-xl text-center relative overflow-hidden flex flex-col items-center justify-center min-h-[400px] w-full max-w-2xl mx-auto my-auto">
-                <div class="w-32 h-32 bg-brand-50 rounded-full flex items-center justify-center mb-6 shadow-inner border border-brand-100">
-                    <i class="ph-fill ph-storefront text-6xl text-brand-500"></i>
+        <div id="shopView" class="hidden animate-fade-in space-y-8 flex-1 flex-col h-full p-2 lg:p-6 overflow-y-auto">
+            <!-- Shop Header -->
+            <div class="flex items-center justify-between bg-white/70 backdrop-blur-xl p-6 rounded-3xl border border-white/50 mb-6">
+                <div>
+                   <h2 class="text-2xl font-black text-slate-800">Tienda de Gizzmo</h2>
+                   <p class="text-sm text-slate-500 font-medium font-sans">Usa tus monedas para personalizar a tu compañero.</p>
                 </div>
-                <h3 class="text-3xl font-extrabold text-slate-800 mb-4 tracking-tight">Tienda de Accesorios</h3>
-                <p class="text-slate-500 max-w-sm mb-8 text-lg font-medium">Pronto podrás gastar tus monedas obtenidas con tu esfuerzo para personalizar a tu compañero. ¡Mantén tus rachas!</p>
-                <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 text-white px-8 py-3.5 rounded-2xl font-black uppercase tracking-widest text-sm shadow-xl shadow-yellow-500/30 inline-block">
-                    Muy Pronto
+                <div class="flex items-center gap-2 bg-yellow-100 px-4 py-2 rounded-2xl border border-yellow-200">
+                    <i class="ph-fill ph-coin text-yellow-500 text-xl"></i>
+                    <span class="userCoinsDisplay font-black text-yellow-700">0</span>
                 </div>
+            </div>
+
+            <!-- Shop Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-20">
+                <!-- Item 1: Capa de Héroe -->
+                <div class="group bg-white rounded-3xl p-5 border border-slate-100 shadow-sm relative overflow-hidden flex flex-col items-center justify-center opacity-60 grayscale hover:grayscale-0 transition-all cursor-not-allowed">
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100 group-hover:bg-red-50 transition-colors">
+                        <i class="ph-fill ph-coat-hanger text-4xl text-slate-300 group-hover:text-red-400"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-700 text-sm">Capa de Héroe</h4>
+                    <div class="mt-3 flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
+                        <i class="ph-fill ph-coin text-yellow-500 text-xs"></i>
+                        <span class="text-xs font-black text-slate-500">500</span>
+                    </div>
+                    <!-- Lock Overlay -->
+                    <div class="absolute inset-0 bg-slate-900/5 backdrop-blur-[1px] flex items-center justify-center opacity-100">
+                        <i class="ph-fill ph-lock-key text-slate-400 text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Item 2: Lentes Neon -->
+                <div class="group bg-white rounded-3xl p-5 border border-slate-100 shadow-sm relative overflow-hidden flex flex-col items-center justify-center opacity-60 grayscale hover:grayscale-0 transition-all cursor-not-allowed">
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100 group-hover:bg-cyan-50 transition-colors">
+                        <i class="ph-fill ph-eyeglasses text-4xl text-slate-300 group-hover:text-cyan-400"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-700 text-sm">Lentes Neon</h4>
+                    <div class="mt-3 flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
+                        <i class="ph-fill ph-coin text-yellow-500 text-xs"></i>
+                        <span class="text-xs font-black text-slate-500">350</span>
+                    </div>
+                    <!-- Lock Overlay -->
+                    <div class="absolute inset-0 bg-slate-900/5 backdrop-blur-[1px] flex items-center justify-center opacity-100">
+                        <i class="ph-fill ph-lock-key text-slate-400 text-2xl"></i>
+                    </div>
+                </div>
+
+                <!-- Item 3: Sombrero Zen -->
+                <div class="group bg-white rounded-3xl p-5 border border-slate-100 shadow-sm relative overflow-hidden flex flex-col items-center justify-center opacity-60 grayscale hover:grayscale-0 transition-all cursor-not-allowed">
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100 group-hover:bg-brand-50 transition-colors">
+                        <i class="ph-fill ph-mountains text-4xl text-slate-300 group-hover:text-brand-500"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-700 text-sm">Sombrero Zen</h4>
+                    <div class="mt-3 flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
+                        <i class="ph-fill ph-coin text-yellow-500 text-xs"></i>
+                        <span class="text-xs font-black text-slate-500">200</span>
+                    </div>
+                    <!-- Lock Overlay -->
+                    <div class="absolute inset-0 bg-slate-900/5 backdrop-blur-[1px] flex items-center justify-center opacity-100">
+                        <i class="ph-fill ph-lock-key text-slate-400 text-2xl"></i>
+                    </div>
+                </div>
+
+                 <!-- Item 4: Auriculares -->
+                 <div class="group bg-white rounded-3xl p-5 border border-slate-100 shadow-sm relative overflow-hidden flex flex-col items-center justify-center opacity-60 grayscale hover:grayscale-0 transition-all cursor-not-allowed">
+                    <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-4 border border-slate-100 group-hover:bg-purple-50 transition-colors">
+                        <i class="ph-fill ph-headphones text-4xl text-slate-300 group-hover:text-purple-400"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-700 text-sm">Auriculares</h4>
+                    <div class="mt-3 flex items-center gap-1 bg-slate-100 px-3 py-1 rounded-full">
+                        <i class="ph-fill ph-coin text-yellow-500 text-xs"></i>
+                        <span class="text-xs font-black text-slate-500">600</span>
+                    </div>
+                    <!-- Lock Overlay -->
+                    <div class="absolute inset-0 bg-slate-900/5 backdrop-blur-[1px] flex items-center justify-center opacity-100">
+                        <i class="ph-fill ph-lock-key text-slate-400 text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Message -->
+            <div class="text-center py-10 bg-slate-900 text-white rounded-[2.5rem] mt-auto">
+                <i class="ph-fill ph-storefront text-4xl text-brand-400 mb-2"></i>
+                <h3 class="text-xl font-bold">¡La tienda abrirá pronto!</h3>
+                <p class="text-slate-400 text-sm max-w-xs mx-auto mt-2">Estamos preparando los mejores accesorios para que tu compañero luzca increíble.</p>
             </div>
         </div>
 
     </main>
+
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <!-- MODAL: Nuevo Hábito -->
     <div id="habitModal"
@@ -566,14 +654,15 @@
             id="modalContent">
             <div class="bg-white rounded-[2rem] shadow-2xl flex flex-col max-h-full overflow-hidden">
                 <div class="p-8 pb-0 flex justify-between items-center shrink-0">
-                    <h3 class="text-2xl font-bold text-slate-800">Nuevo Hábito</h3>
+                    <h3 id="modalTitle" class="text-2xl font-bold text-slate-800">Nuevo Hábito</h3>
                     <button onclick="toggleModal()"
                         class="w-10 h-10 rounded-full bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600 flex items-center justify-center transition-colors">
                         <i class="ph-bold ph-x text-lg"></i>
                     </button>
                 </div>
 
-                <form id="newHabitForm" class="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                <form id="habitForm" onsubmit="handleHabitSubmit(event)" class="p-8 space-y-6 overflow-y-auto custom-scrollbar">
+                    <input type="hidden" id="editHabitId" value="">
                     <div>
                         <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">¿Qué quieres
                             lograr?</label>
@@ -715,8 +804,10 @@
                     <div class="pt-4 flex gap-3">
                         <button type="button" onclick="toggleModal()"
                             class="flex-1 py-4 rounded-2xl text-slate-500 font-bold hover:bg-slate-50 transition-colors">Cancelar</button>
-                        <button type="submit"
-                            class="flex-[2] py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all transform active:scale-95">Crear</button>
+                        <button type="submit" id="submitHabitBtn"
+                            class="flex-[2] py-4 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all transform active:scale-95">
+                            <span id="submitBtnText">Crear</span>
+                        </button>
                     </div>
                 </form>
             </div>
