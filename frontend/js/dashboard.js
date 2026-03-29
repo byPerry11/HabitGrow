@@ -206,45 +206,41 @@ function renderPet(mascota) {
              class="w-64 h-64 object-contain animate-float drop-shadow-2xl pointer-events-none">
     `;
 
-    // ── Sprite Animator Setup ──
-    // Destruir instancia anterior si existe
+    // ── Sprite Animator Setup (solo para bebé) ──
     if (petAnimator) {
         petAnimator.destroy();
         petAnimator = null;
     }
 
-    // Crear nueva instancia con animaciones disponibles
-    petAnimator = new PetAnimator(petContainer, {
-        basePath: 'assets/mascotas/Gizzmo/animations',
-        animations: {
-            tap: { frames: 60, frameW: 320, frameH: 180, fps: 24, loop: false }
-            // Futuras: idle, happy, evolve, eat, sleep...
-        }
-    });
-
-    // Pre-cargar la animación tap en background
-    petAnimator.preload('tap').catch(() => {
-        console.warn('No se pudo precargar animación tap');
-    });
-
-    // ── Click / Touch → reproducir animación ──
-    petContainer.onclick = (e) => {
-        // No activar si es el huevo (sin mascota)
-        if (!state.pet || !state.pet.nombre) return;
-        // No activar si ya está reproduciendo
-        if (petAnimator._isPlaying) return;
-
-        e.stopPropagation();
-
-        // Efecto de partículas ✨
-        _spawnTapParticles(petContainer, e);
-
-        // Reproducir animación tap
-        petAnimator.play('tap', () => {
-            // Al terminar, restaurar la imagen estática
-            petAnimator.restore();
+    if (isBaby) {
+        petAnimator = new PetAnimator(petContainer, {
+            basePath: 'assets/mascotas/Gizzmo/animations',
+            animations: {
+                tap: { frames: 60, frameW: 640, frameH: 360, cols: 10, fps: 48, loop: false }
+                // Futuras: idle, happy, evolve, eat, sleep...
+            }
         });
-    };
+
+        // Pre-cargar la animación tap en background
+        petAnimator.preload('tap').catch(() => {
+            console.warn('No se pudo precargar animación tap');
+        });
+
+        // ── Click / Touch → reproducir animación ──
+        petContainer.onclick = (e) => {
+            if (!state.pet || !state.pet.nombre) return;
+            if (petAnimator._isPlaying) return;
+
+            e.stopPropagation();
+            _spawnTapParticles(petContainer, e);
+
+            petAnimator.play('tap', () => {
+                petAnimator.restore();
+            });
+        };
+    } else {
+        petContainer.onclick = null;
+    }
 }
 
 /**

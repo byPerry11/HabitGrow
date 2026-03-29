@@ -12,8 +12,8 @@
 
 /* Pet Sprite Animation Canvas */
 .pet-anim-canvas {
-    width: 16rem;   /* w-64 equivalente */
-    height: 16rem;
+    width: 20rem;
+    height: 20rem;
     object-fit: contain;
     filter: drop-shadow(0 25px 25px rgb(0 0 0 / 0.15));
     pointer-events: none;

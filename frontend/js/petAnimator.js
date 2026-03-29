@@ -141,8 +141,12 @@ class PetAnimator {
         const sprite = this._spriteImages[this._currentAnim];
         if (!sprite || !this._ctx) return;
 
-        const sx = 0;
-        const sy = this._frameIndex * anim.frameH;
+        const cols = anim.cols || 1;  // columnas en el grid (1 = vertical)
+        const col = this._frameIndex % cols;
+        const row = Math.floor(this._frameIndex / cols);
+
+        const sx = col * anim.frameW;
+        const sy = row * anim.frameH;
 
         this._ctx.clearRect(0, 0, anim.frameW, anim.frameH);
         this._ctx.drawImage(
