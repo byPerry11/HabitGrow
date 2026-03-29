@@ -41,7 +41,12 @@ function initUI() {
     fetchHeatMap();
 
     // Configurar listeners de eventos
-    document.getElementById('newHabitForm').addEventListener('submit', handleNewHabit);
+    const habitForm = document.getElementById('habitForm');
+    if (habitForm) {
+        // El formulario ya tiene onsubmit="handleHabitSubmit(event)" en el HTML, 
+        // pero podemos mantenerlo robusto si se quita del HTML.
+        habitForm.addEventListener('submit', handleHabitSubmit);
+    }
 
     // Actualizar texto del slider de pasos
     const stepsInput = document.getElementById('stepsInput');
@@ -1429,6 +1434,6 @@ window.toggleModal = toggleModal;
 window.changePage = changePage;
 window.logout = logout;
 window.toggleHabit = toggleHabit;
-window.handleNewHabit = handleNewHabit;
+window.handleHabitSubmit = handleHabitSubmit;
 window.openAdoptionModal = openAdoptionModal;
 window.closeAdoptionModal = closeAdoptionModal;
