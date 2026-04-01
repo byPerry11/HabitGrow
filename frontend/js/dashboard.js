@@ -638,18 +638,27 @@ function renderHabitsList() {
                      <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between w-full">
                             <h4 class="font-bold text-slate-800 text-sm truncate pr-2 ${isCompleted ? 'line-through text-slate-400' : ''}">${habit.nombre}</h4>
-                            <div class="relative">
-                                <button onclick="toggleDropdown(event, ${habit.id})" class="text-slate-300 hover:text-brand-500 transition-colors p-1 flex items-center justify-center focus:outline-none" title="Opciones">
-                                    <i class="ph-bold ph-dots-three-vertical text-lg"></i>
+                            <div class="flex items-center gap-1">
+                                <!-- Bell Icon Quick Toggle -->
+                                <button onclick="toggleHabitNotifications(event, ${habit.id})" 
+                                    class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${habit.notificaciones_activas ? 'bg-yellow-400 text-white shadow-sm shadow-yellow-200' : 'bg-slate-50 text-slate-300 hover:text-slate-400'}"
+                                    title="${habit.notificaciones_activas ? 'Notificaciones activas' : 'Activar notificaciones'}">
+                                    <i class="ph-bold ${habit.notificaciones_activas ? 'ph-bell-ringing' : 'ph-bell'} text-sm"></i>
                                 </button>
-                                <div id="dropdown-${habit.id}" class="hidden absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-xl border border-slate-100 z-[100] overflow-hidden">
-                                    <button onclick="editHabit(${habit.id})" class="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-brand-600 flex items-center gap-2 transition-colors">
-                                        <i class="ph-bold ph-pencil-simple text-brand-500"></i> Editar
+
+                                <div class="relative">
+                                    <button onclick="toggleDropdown(event, ${habit.id})" class="text-slate-300 hover:text-brand-500 transition-colors p-1 flex items-center justify-center focus:outline-none" title="Opciones">
+                                        <i class="ph-bold ph-dots-three-vertical text-lg"></i>
                                     </button>
-                                    <div class="h-px bg-slate-100 w-full"></div>
-                                    <button onclick="deleteHabit(${habit.id})" class="w-full text-left px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors">
-                                        <i class="ph-bold ph-trash text-red-500"></i> Eliminar
-                                    </button>
+                                    <div id="dropdown-${habit.id}" class="hidden absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-xl border border-slate-100 z-[100] overflow-hidden">
+                                        <button onclick="editHabit(${habit.id})" class="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-brand-600 flex items-center gap-2 transition-colors">
+                                            <i class="ph-bold ph-pencil-simple text-brand-500"></i> Editar
+                                        </button>
+                                        <div class="h-px bg-slate-100 w-full"></div>
+                                        <button onclick="deleteHabit(${habit.id})" class="w-full text-left px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors">
+                                            <i class="ph-bold ph-trash text-red-500"></i> Eliminar
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -792,6 +801,20 @@ function editHabit(id) {
         cb.checked = days.includes(cb.value);
     });
 
+    // Notificaciones
+    const notifyToggle = document.getElementById('habitNotificationsToggle');
+    const timeInput = document.getElementById('habitNotificationTime');
+    const timeContainer = document.getElementById('notificationTimeContainer');
+    
+    if (notifyToggle) {
+        notifyToggle.checked = habit.notificaciones_activas || false;
+        if (timeContainer) timeContainer.classList.toggle('hidden', !habit.notificaciones_activas);
+    }
+    if (timeInput) {
+        // Formatear hora (HH:MM:SS -> HH:MM)
+        timeInput.value = habit.hora_notificacion ? habit.hora_notificacion.substring(0, 5) : "09:00";
+    }
+
     toggleModal();
 }
 
@@ -812,12 +835,17 @@ async function handleHabitSubmit(e) {
     }
 
     try {
+        const notifyToggle = document.getElementById('habitNotificationsToggle');
+        const timeInput = document.getElementById('habitNotificationTime');
+
         const payload = {
             nombre: nameInput.value,
             categoria: categoryInput.value,
             dias_semana: selectedDays,
             total_pasos: stepsInput ? parseInt(stepsInput.value) : 1,
-            activo: true
+            activo: true,
+            notificaciones_activas: notifyToggle ? notifyToggle.checked : false,
+            hora_notificacion: timeInput && notifyToggle.checked ? timeInput.value : null
         };
 
         const url = editId ? `${API_BASE_URL}/habits/${editId}/` : `${API_BASE_URL}/habits/`;
@@ -1724,3 +1752,143 @@ window.showObStep = showObStep;
 window.previewObProfilePic = previewObProfilePic;
 window.handleObHabitSubmit = handleObHabitSubmit;
 window.finishOnboarding = finishOnboarding;
+/**
+ * Funciones de Notificaciones Push (PWA)
+ */
+
+// Utilidad para obtener cookies (CSRF)
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Función auxiliar para convertir la clave VAPID de Base64 a Uint8Array
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+// Solicitar permiso de notificaciones
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        showToast("Este navegador no soporta notificaciones", "warning");
+        return false;
+    }
+
+    if (Notification.permission === 'granted') return true;
+
+    if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+    }
+
+    showToast("Permiso de notificaciones denegado. Actívalo en ajustes.", "warning");
+    return false;
+}
+
+// Suscribirse al servidor de Push
+async function subscribeToPush() {
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        
+        // Obtener la clave pública VAPID dinámicamente desde el Backend
+        const keyResponse = await fetch(`${API_BASE_URL}/vapid-key/`, {
+            headers: {
+                'Authorization': `Token ${localStorage.getItem('token')}`
+            }
+        }).then(r => r.json());
+
+        if (!keyResponse || !keyResponse.public_key) {
+            console.error('No se pudo obtener la clave VAPID pública');
+            return;
+        }
+
+        const vapidPublicKey = keyResponse.public_key;
+        const convertedVapidKey = urlBase64ToUint8Array(vapidPublicKey);
+
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: convertedVapidKey
+        });
+
+        // Enviar suscripción al backend
+        // Nota: El endpoint /webpush/save_information es el de django-webpush
+        await fetch('/webpush/save_information', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken') // django-webpush suele requerir CSRF
+            },
+            body: JSON.stringify({
+                subscription: subscription,
+                browser: navigator.userAgent,
+                group: 'default'
+            })
+        });
+
+        console.log('Suscripción Push exitosa');
+    } catch (error) {
+        console.error('Error al suscribirse a Push:', error);
+    }
+}
+
+// Quick toggle para notificaciones de un hábito
+async function toggleHabitNotifications(event, id) {
+    if (event) event.stopPropagation();
+    
+    const habit = state.habits.find(h => h.id === id);
+    if (!habit) return;
+
+    // Si intenta activar, primero pedir permiso
+    if (!habit.notificaciones_activas) {
+        const permission = await requestNotificationPermission();
+        if (!permission) return;
+    }
+
+    try {
+        const newStatus = !habit.notificaciones_activas;
+        const result = await authenticatedFetch(`${API_BASE_URL}/habits/${id}/`, {
+            method: 'PATCH',
+            body: JSON.stringify({ notificaciones_activas: newStatus })
+        });
+
+        if (result) {
+            const idx = state.habits.findIndex(h => h.id === id);
+            state.habits[idx] = result;
+            renderHabitsList();
+            showToast(newStatus ? "Recordatorios activados" : "Recordatorios desactivados", "info");
+            
+            // Suscribirse si se activó y el navegador lo permite
+            if (newStatus && 'serviceWorker' in navigator && 'PushManager' in window) {
+                subscribeToPush();
+            }
+        }
+    } catch (e) {
+        showToast("Error al cambiar notificaciones", "error");
+    }
+}
+
+// Exportar funciones globales
+window.requestNotificationPermission = requestNotificationPermission;
+window.subscribeToPush = subscribeToPush;
+window.toggleHabitNotifications = toggleHabitNotifications;

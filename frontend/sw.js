@@ -78,3 +78,58 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
+// ── PUSH: Manejar notificaciones entrantes ──────────────────────────────────────
+self.addEventListener('push', event => {
+  let data = {
+    title: 'HabitGrow',
+    body: '¡Es hora de revisar tus hábitos!',
+    url: '/'
+  };
+  
+  try {
+    if (event.data) {
+      data = event.data.json();
+    }
+  } catch (e) {
+    console.warn('Push event received non-JSON data:', event.data.text());
+    try {
+        data.body = event.data.text();
+    } catch(e2) {}
+  }
+
+  const title = data.title || 'HabitGrow';
+  const options = {
+    body: data.body,
+    icon: './assets/icon.png',
+    badge: './assets/icon.png',
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/'
+    }
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+// ── NOTIFICATION CLICK: Abrir la app al hacer clic ─────────────────────────────
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  
+  const targetUrl = event.notification.data.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windowClients => {
+      for (const client of windowClients) {
+        if (new URL(client.url, self.location.origin).pathname === new URL(targetUrl, self.location.origin).pathname) {
+          return client.focus();
+        }
+      }
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});
