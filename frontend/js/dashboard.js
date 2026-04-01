@@ -65,9 +65,16 @@ function initUI() {
 // Cargar todos los datos del dashboard en paralelo
 async function loadDashboardData() {
     try {
-        // Cargar perfil, mascota y hábitos simultáneamente
+        // Primero cargar perfil para verificar estado de onboarding
+        await fetchProfile();
+        
+        if (state.user && state.user.is_onboarded === false) {
+            startOnboarding();
+            return; // Detener carga normal
+        }
+
+        // Cargar mascota y hábitos si ya pasó el onboarding
         await Promise.all([
-            fetchProfile(),
             fetchMascota(),
             fetchHabits()
         ]);
@@ -80,46 +87,54 @@ async function loadDashboardData() {
 
 // Obtener datos del perfil del usuario
 async function fetchProfile() {
-    const data = await authenticatedFetch(`${API_BASE_URL}/profile/me/`);
-    if (data) {
-        state.user = data;
+    try {
+        const data = await authenticatedFetch(`${API_BASE_URL}/profile/me/`);
+        if (data) {
+            state.user = data;
 
-        // Actualizar nombre de usuario
-        const nameEl = document.getElementById('userName');
-        if (nameEl) nameEl.textContent = data.username;
+            // Actualizar nombre de usuario
+            const nameEl = document.getElementById('userName');
+            if (nameEl) nameEl.textContent = data.username;
 
-        // Actualizar monedas del perfil
-        const coinsEl = document.getElementById('userCoins');
-        if (coinsEl) coinsEl.textContent = data.coins || 0;
+            // Actualizar monedas del perfil
+            const coinsEl = document.getElementById('userCoins');
+            if (coinsEl) coinsEl.textContent = data.coins || 0;
 
-        // Actualizar imagen de perfil (URL dinámica según entorno)
-        const profilePic = document.getElementById('headerProfilePic');
-        const profilePagePic = document.getElementById('profilePagePic');
-        if (profilePic) {
-            const imgSrc = data.profile_picture 
-                ? (data.profile_picture.startsWith('http') ? data.profile_picture : `${API_BASE_URL.replace('/api/v1', '')}${data.profile_picture}`)
-                : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=10b981&color=fff`;
+            // Actualizar imagen de perfil (URL dinámica según entorno)
+            const profilePic = document.getElementById('headerProfilePic');
+            const profilePagePic = document.getElementById('profilePagePic');
+            if (profilePic) {
+                const imgSrc = data.profile_picture 
+                    ? (data.profile_picture.startsWith('http') ? data.profile_picture : `${API_BASE_URL.replace('/api/v1', '')}${data.profile_picture}`)
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(data.username)}&background=10b981&color=fff`;
+                
+                profilePic.src = imgSrc;
+                if (profilePagePic) profilePagePic.src = imgSrc;
+            }
+
+            // Actualizar datos del perfil en la vista de perfil
+            const profileEmail = document.getElementById('profileEmail');
+            if (profileEmail) profileEmail.textContent = data.email;
             
-            profilePic.src = imgSrc;
-            if (profilePagePic) profilePagePic.src = imgSrc;
-        }
+            const profileJoinDate = document.getElementById('profileJoinDate');
+            if (profileJoinDate && data.date_joined) {
+                const date = new Date(data.date_joined);
+                const options = { month: 'long', year: 'numeric' };
+                profileJoinDate.textContent = date.toLocaleDateString('es-ES', options);
+            }
 
-        // Actualizar datos del perfil en la vista de perfil
-        const profileEmail = document.getElementById('profileEmail');
-        if (profileEmail) profileEmail.textContent = data.email;
-        
-        const profileJoinDate = document.getElementById('profileJoinDate');
-        if (profileJoinDate && data.date_joined) {
-            const date = new Date(data.date_joined);
-            const options = { month: 'long', year: 'numeric' };
-            profileJoinDate.textContent = date.toLocaleDateString('es-ES', options);
+            const profileCoins = document.getElementById('profileCoins');
+            if (profileCoins) profileCoins.textContent = data.coins || 0;
+            
+            // Actualizar todas las visualizaciones de monedas
+            document.querySelectorAll('.userCoinsDisplay').forEach(el => el.textContent = data.coins || 0);
         }
-
-        const profileCoins = document.getElementById('profileCoins');
-        if (profileCoins) profileCoins.textContent = data.coins || 0;
-        
-        // Actualizar todas las visualizaciones de monedas
-        document.querySelectorAll('.userCoinsDisplay').forEach(el => el.textContent = data.coins || 0);
+    } catch (error) {
+        console.error('❌ Error fetching profile:', error);
+        if (error.status === 404) {
+            showToast("Perfil no encontrado. Contacta a soporte.", "error");
+        }
+        throw error;
     }
 }
 
@@ -135,11 +150,20 @@ async function fetchMascota() {
             renderPet(data);  // Renderizar mascota en la UI
         }
     } catch (error) {
-        console.error('❌ [DEBUG] Error fetching mascota:', error);
-        // Si no tiene mascota, mostrar modal de adopción
+        // Manejar el caso de que no tenga mascota
         if (error.status === 404) {
-            console.log('ℹ️ [DEBUG] No mascota found (404), showing adoption modal');
+            console.log('ℹ️ [DEBUG] No mascota found, showing adoption state');
             renderNoPet();
+            
+            // Auto-disparar modal si ya pasó el onboarding pero no tiene mascota
+            if (state.user && state.user.is_onboarded) {
+                setTimeout(() => {
+                    showToast("¡Bienvenido! Es momento de adoptar a tu compañero.", "info");
+                    openAdoptionModal();
+                }, 1000);
+            }
+        } else {
+            console.error('❌ [DEBUG] Error fetching mascota:', error);
         }
     }
 }
@@ -388,6 +412,11 @@ function openAdoptionModal() {
     if (!modal) return;
 
     modal.classList.remove('hidden');
+    
+    // Auto-seleccionar Gizzmo
+    const gizzmoRadio = document.querySelector('input[name="especie"][value="gizzmo"]');
+    if (gizzmoRadio) gizzmoRadio.checked = true;
+
     // Microtask to allow transition
     setTimeout(() => {
         modal.classList.remove('opacity-0', 'pointer-events-none');
@@ -1465,3 +1494,163 @@ window.handleHabitSubmit = handleHabitSubmit;
 window.openAdoptionModal = openAdoptionModal;
 window.closeAdoptionModal = closeAdoptionModal;
 window.toggleDropdown = toggleDropdown;
+
+// --- ASISTENTE DE PRIMER INGRESO (ONBOARDING) ---
+let currentObStep = 1;
+let obProfileFile = null;
+
+function startOnboarding() {
+    document.getElementById('mainContent').classList.add('hidden');
+    const sidebar = document.querySelector('aside');
+    if (sidebar) sidebar.classList.add('hidden');
+    
+    document.getElementById('onboardingWidget').classList.remove('hidden');
+    // Forzar reflow para animación
+    void document.getElementById('onboardingWidget').offsetWidth;
+    document.getElementById('onboardingWidget').classList.remove('opacity-0');
+    
+    // Pre-poblar datos de Google o actuales
+    if (state.user) {
+        if (state.user.username) document.getElementById('obUsernameInput').value = state.user.username;
+        if (state.user.google_avatar) document.getElementById('obProfilePic').src = state.user.google_avatar;
+        else if (state.user.profile_picture) {
+            const imgSrc = state.user.profile_picture.startsWith('http') 
+                           ? state.user.profile_picture 
+                           : `${API_BASE_URL.replace('/api/v1', '')}${state.user.profile_picture}`;
+            document.getElementById('obProfilePic').src = imgSrc;
+        }
+    }
+    
+    showObStep(1);
+}
+
+function showObStep(step) {
+    // Ocultar todos
+    [1, 2, 3].forEach(s => {
+        const el = document.getElementById(`obStep${s}`);
+        if (el) {
+            el.classList.add('opacity-0', 'scale-95');
+            setTimeout(() => {
+                if (currentObStep !== s) el.classList.add('hidden');
+                el.classList.remove('flex');
+            }, 300);
+        }
+    });
+
+    currentObStep = step;
+    const nextEl = document.getElementById(`obStep${step}`);
+    if (nextEl) {
+        setTimeout(() => {
+            nextEl.classList.remove('hidden');
+            nextEl.classList.add('flex');
+            // Forzar reflow
+            void nextEl.offsetWidth;
+            nextEl.classList.remove('opacity-0', 'scale-95');
+        }, 300);
+    }
+}
+
+function nextObStep(step) {
+    if (currentObStep === 1 && step === 2) {
+        // Validar username
+        const username = document.getElementById('obUsernameInput').value.trim();
+        if (!username) {
+            showToast('Por favor, ingresa un apodo', 'warning');
+            return;
+        }
+    }
+    showObStep(step);
+}
+
+function previewObProfilePic(e) {
+    const file = e.target.files[0];
+    if (file) {
+        obProfileFile = file;
+        const reader = new FileReader();
+        reader.onload = (evt) => {
+            document.getElementById('obProfilePic').src = evt.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+async function handleObHabitSubmit(e) {
+    e.preventDefault();
+    const btn = document.getElementById('btnCreateObHabit');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Guardando...';
+    btn.disabled = true;
+
+    const nombre = document.getElementById('obHabitInput').value.trim();
+    const categoria = document.querySelector('input[name="obCategory"]:checked').value;
+    
+    try {
+        await authenticatedFetch(`${API_BASE_URL}/habits/`, {
+            method: 'POST',
+            body: JSON.stringify({
+                nombre: nombre,
+                categoria: categoria,
+                dias_semana: "0,1,2,3,4,5,6", // Todos los días por defecto
+                total_pasos: 1,
+                activo: true
+            })
+        });
+        showToast('¡Primer hábito plantado!', 'success');
+        nextObStep(3);
+    } catch (error) {
+        showToast('Error al crear el hábito', 'error');
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function finishOnboarding() {
+    const btn = document.getElementById('btnSelectPet');
+    btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Finalizando...';
+    btn.disabled = true;
+
+    try {
+        // 1. Adoptar Mascota (Gizzmo)
+        try {
+            await authenticatedFetch(`${API_BASE_URL}/mascota/adoptar/`, {
+                method: 'POST',
+                body: JSON.stringify({ nombre: 'Gizzmo', especie: 'gizzmo' })
+            });
+        } catch(e) { /* Si ya había adoptado por error, ignorar */ }
+
+        // 2. Actualizar Profile (is_onboarded, username y foto)
+        const username = document.getElementById('obUsernameInput').value.trim();
+        
+        let formData = new FormData();
+        formData.append('is_onboarded', 'true');
+        if (username) formData.append('username', username);
+        if (obProfileFile) formData.append('profile_picture', obProfileFile);
+
+        const token = localStorage.getItem('token');
+        await fetch(`${API_BASE_URL}/profile/me/`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Token ${token}` }, // FormData no usa Content-Type manual
+            body: formData
+        });
+
+        // 3. Finalizar y mostrar dashboard
+        showToast('¡Bienvenido a HabitGrow!', 'success');
+        document.getElementById('onboardingWidget').classList.add('opacity-0');
+        setTimeout(() => {
+            window.location.reload(); // Recargar completo para limpiar vistas
+        }, 500);
+
+    } catch (error) {
+        showToast('Ocurrió un error. Intenta de nuevo', 'error');
+        btn.innerHTML = '¡Elegir! <i class="ph-bold ph-sparkle text-brand-500"></i>';
+        btn.disabled = false;
+    }
+}
+
+// Ventanas globales del nuevo flujo
+window.startOnboarding = startOnboarding;
+window.nextObStep = nextObStep;
+window.showObStep = showObStep;
+window.previewObProfilePic = previewObProfilePic;
+window.handleObHabitSubmit = handleObHabitSubmit;
+window.finishOnboarding = finishOnboarding;

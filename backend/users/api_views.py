@@ -14,6 +14,10 @@ class RegisterAPIView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
+            # Asegurar perfil independientemente de signals
+            from .models import Profile
+            Profile.objects.get_or_create(user=user)
+            
             token, created = Token.objects.get_or_create(user=user)
             return Response({
                 'token': token.key,

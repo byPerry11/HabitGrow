@@ -100,14 +100,18 @@ async function handleRegister(e) {
         } else {
             // Handle errors
             let msg = 'Error al registrarse';
-            if (data.username) msg = `Usuario: ${data.username[0]}`;
-            if (data.email) msg = `Email: ${data.email[0]}`;
+            if (data.username) msg = `Usuario: ${Array.isArray(data.username) ? data.username[0] : data.username}`;
+            else if (data.email) msg = `Email: ${Array.isArray(data.email) ? data.email[0] : data.email}`;
+            else if (data.non_field_errors) msg = data.non_field_errors[0];
+            else if (data.error) msg = data.error;
+            else if (data.detail) msg = data.detail;
+            
             showToast(msg, 'error');
             resetBtn(btn, originalContent);
         }
     } catch (error) {
-        console.error('Error:', error);
-        showToast('Error de conexión', 'error');
+        console.error('Registration fetch error:', error);
+        showToast('Error de conexión con el servidor', 'error');
         resetBtn(btn, originalContent);
     }
 }

@@ -45,7 +45,8 @@ class MascotaViewSet(viewsets.ModelViewSet):
             return Response(
                 {
                     'error': 'No tienes mascota aún.',
-                    'mensaje': 'Adopta una mascota asignándole un sobrenombre.'
+                    'mensaje': 'Adopta una mascota asignándole un sobrenombre.',
+                    'code': 'needs_adoption'
                 },
                 status=status.HTTP_404_NOT_FOUND
             )

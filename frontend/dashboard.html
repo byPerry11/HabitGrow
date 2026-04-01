@@ -897,6 +897,141 @@
         </button>
     </nav>
 
+    <!-- ONBOARDING WIZARD -->
+    <div id="onboardingWidget" class="fixed inset-0 z-[200] bg-slate-900 flex items-center justify-center p-4 transition-all duration-700 hidden opacity-0 text-white overflow-hidden">
+        
+        <!-- Step 1: Perfil -->
+        <div id="obStep1" class="hidden flex-col items-center bg-white/10 backdrop-blur-3xl border border-white/20 p-8 md:p-12 rounded-[3.5rem] shadow-2xl max-w-lg w-full text-center transition-all duration-500 transform scale-95 opacity-0">
+            <h2 class="text-4xl font-black text-white mb-2 tracking-tighter">Tu Identidad</h2>
+            <p class="text-brand-200 mb-10 text-sm md:text-base font-medium">Personaliza cómo te verás en el jardín.</p>
+            
+            <div class="relative inline-block group mb-10">
+                <div class="w-36 h-36 rounded-full border-4 border-brand-400 shadow-[0_0_30px_rgba(16,185,129,0.3)] overflow-hidden bg-slate-800 mx-auto transition-transform hover:scale-105 duration-300">
+                    <img id="obProfilePic" src="https://ui-avatars.com/api/?name=Jardinero&background=10b981&color=fff" class="w-full h-full object-cover">
+                </div>
+                <label for="obProfilePicInput" class="absolute bottom-1 right-1 bg-brand-500 text-white p-3 rounded-full cursor-pointer hover:bg-brand-400 transition-colors shadow-lg border-2 border-slate-900 group-hover:scale-110 duration-200">
+                    <i class="ph-bold ph-camera text-xl"></i>
+                </label>
+                <input type="file" id="obProfilePicInput" accept="image/*" class="hidden" onchange="previewObProfilePic(event)">
+            </div>
+            
+            <div class="text-left mb-10 w-full">
+                <label class="block text-xs font-black text-brand-300 uppercase tracking-widest mb-3 ml-2">Tu apodo genial</label>
+                <input type="text" id="obUsernameInput" placeholder="Ej: Maestro Zen" class="w-full px-6 py-5 rounded-[2rem] bg-white/10 border-2 border-white/20 focus:border-brand-500 focus:bg-white/20 outline-none transition-all text-white placeholder-white/30 font-bold text-xl text-center shadow-inner">
+            </div>
+            
+            <button onclick="nextObStep(2)" id="btnNextStep1" class="w-full py-5 bg-gradient-to-r from-brand-600 to-brand-400 text-white font-black rounded-[2rem] shadow-[0_10px_30px_rgba(16,185,129,0.4)] hover:shadow-[0_10px_40px_rgba(16,185,129,0.6)] hover:-translate-y-1 transition-all text-lg tracking-wider active:scale-95 flex justify-center items-center gap-2">
+                Continuar <i class="ph-bold ph-arrow-right"></i>
+            </button>
+        </div>
+
+        <!-- Step 2: Primer Hábito -->
+        <div id="obStep2" class="hidden flex-col bg-white text-slate-800 rounded-[3.5rem] shadow-2xl w-full max-w-4xl p-6 md:p-10 transition-all duration-500 transform scale-95 opacity-0 pb-16 md:pb-10 max-h-[95vh] min-h-[500px] overflow-y-auto custom-scrollbar">
+            <div class="text-center mb-8 shrink-0">
+                <h2 class="text-4xl font-black text-slate-900 tracking-tighter">Tu Primer Objetivo</h2>
+                <p class="text-slate-500 font-medium mt-2">Planta la semilla de tu éxito. ¡Puedes cambiarlo después!</p>
+            </div>
+            
+            <!-- Clon simplificado del formulario de hábitos -->
+            <form id="obHabitForm" onsubmit="handleObHabitSubmit(event)" class="space-y-6 flex-1 flex flex-col justify-between">
+                <div>
+                    <input type="text" id="obHabitInput" placeholder="Ej: Beber 2L de agua" required
+                        class="w-full px-6 py-5 rounded-[2rem] bg-slate-50 border-2 border-slate-100 focus:border-brand-500 focus:bg-white outline-none transition-all text-slate-800 placeholder-slate-400 font-black text-2xl text-center">
+                </div>
+
+                <div>
+                    <!-- Reutilizamos las mismas categorias pero sin labels para ahorrar espacio -->
+                    <div class="grid grid-cols-3 lg:grid-cols-6 gap-3">
+                        <label class="cursor-pointer group"><input type="radio" name="obCategory" value="salud" class="peer hidden" checked><div class="h-20 rounded-3xl bg-slate-50 border-2 border-transparent peer-checked:border-green-500 peer-checked:bg-green-50 flex flex-col items-center justify-center gap-1 transition-all hover:bg-slate-100"><i class="ph-fill ph-heart-beat text-2xl text-slate-400 peer-checked:text-green-500"></i><span class="text-[10px] font-bold text-slate-500 peer-checked:text-green-700">Salud</span></div></label>
+                        <label class="cursor-pointer group"><input type="radio" name="obCategory" value="ejercicio" class="peer hidden"><div class="h-20 rounded-3xl bg-slate-50 border-2 border-transparent peer-checked:border-orange-500 peer-checked:bg-orange-50 flex flex-col items-center justify-center gap-1 transition-all hover:bg-slate-100"><i class="ph-fill ph-barbell text-2xl text-slate-400 peer-checked:text-orange-500"></i><span class="text-[10px] font-bold text-slate-500 peer-checked:text-orange-700">Gym</span></div></label>
+                        <label class="cursor-pointer group"><input type="radio" name="obCategory" value="estudio" class="peer hidden"><div class="h-20 rounded-3xl bg-slate-50 border-2 border-transparent peer-checked:border-blue-500 peer-checked:bg-blue-50 flex flex-col items-center justify-center gap-1 transition-all hover:bg-slate-100"><i class="ph-fill ph-book-open text-2xl text-slate-400 peer-checked:text-blue-500"></i><span class="text-[10px] font-bold text-slate-500 peer-checked:text-blue-700">Estudio</span></div></label>
+                        <label class="cursor-pointer group"><input type="radio" name="obCategory" value="trabajo" class="peer hidden"><div class="h-20 rounded-3xl bg-slate-50 border-2 border-transparent peer-checked:border-purple-500 peer-checked:bg-purple-50 flex flex-col items-center justify-center gap-1 transition-all hover:bg-slate-100"><i class="ph-fill ph-briefcase text-2xl text-slate-400 peer-checked:text-purple-500"></i><span class="text-[10px] font-bold text-slate-500 peer-checked:text-purple-700">Trabajo</span></div></label>
+                        <label class="cursor-pointer group"><input type="radio" name="obCategory" value="tarea" class="peer hidden"><div class="h-20 rounded-3xl bg-slate-50 border-2 border-transparent peer-checked:border-teal-500 peer-checked:bg-teal-50 flex flex-col items-center justify-center gap-1 transition-all hover:bg-slate-100"><i class="ph-fill ph-check-square text-2xl text-slate-400 peer-checked:text-teal-500"></i><span class="text-[10px] font-bold text-slate-500 peer-checked:text-teal-700">Tarea</span></div></label>
+                        <label class="cursor-pointer group"><input type="radio" name="obCategory" value="arte" class="peer hidden"><div class="h-20 rounded-3xl bg-slate-50 border-2 border-transparent peer-checked:border-pink-500 peer-checked:bg-pink-50 flex flex-col items-center justify-center gap-1 transition-all hover:bg-slate-100"><i class="ph-fill ph-paint-brush text-2xl text-slate-400 peer-checked:text-pink-500"></i><span class="text-[10px] font-bold text-slate-500 peer-checked:text-pink-700">Arte</span></div></label>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-8 flex flex-col sm:flex-row gap-4">
+                    <button type="button" onclick="nextObStep(3)" class="w-full sm:w-1/3 py-5 bg-slate-100 text-slate-500 font-bold rounded-[2rem] hover:bg-slate-200 transition-all text-lg active:scale-95">Dejar para después</button>
+                    <button type="submit" id="btnCreateObHabit" class="w-full sm:w-2/3 py-5 bg-brand-500 text-white font-black rounded-[2rem] shadow-[0_10px_20px_rgba(16,185,129,0.3)] hover:bg-brand-400 hover:-translate-y-1 transition-all text-lg active:scale-95 flex justify-center items-center gap-2">
+                        <span>Definir Destino</span> <i class="ph-bold ph-arrow-right"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Step 3: Selector de Mascota (Modo Fighting Game) -->
+        <div id="obStep3" class="hidden w-full max-w-6xl h-[90vh] md:h-[80vh] flex-col md:flex-row gap-6 transition-all duration-500 transform scale-95 opacity-0">
+            <!-- Izquierda: Personaje Destacado -->
+            <div class="flex-[3] bg-gradient-to-br from-brand-600 to-slate-900 rounded-[3.5rem] p-8 md:p-12 shadow-2xl flex flex-col justify-between relative overflow-hidden ring-4 ring-white/10 shrink-0">
+                <!-- Background grid styling -->
+                <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(white 2px, transparent 2.5px); background-size: 30px 30px;"></div>
+                <div class="absolute -top-40 -left-40 w-96 h-96 bg-brand-400 rounded-full mix-blend-overlay filter blur-3xl opacity-50 animate-pulse"></div>
+
+                <div class="relative z-10 text-center md:text-left mt-4 md:mt-0">
+                    <h2 class="text-6xl md:text-8xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-brand-200 drop-shadow-lg leading-none">GIZZMO</h2>
+                    <p class="text-brand-100 mt-4 text-base md:text-xl font-medium max-w-md mx-auto md:mx-0">Un espíritu guardián amable que evoluciona contigo. Se alimenta de tu constancia y celebra tus rachas.</p>
+                </div>
+
+                <div class="relative z-10 flex-1 flex justify-center items-center my-8 md:-my-10">
+                    <!-- Usar el asset Excited para la presentación de personaje -->
+                    <img src="assets/mascotas/Gizzmo/Happy.jpg" alt="Gizzmo" class="w-64 h-64 md:w-96 md:h-96 object-contain drop-shadow-[0_0_50px_rgba(16,185,129,0.5)] animate-float scale-110">
+                </div>
+
+                <div class="relative z-10 w-full mt-auto">
+                    <button onclick="finishOnboarding()" id="btnSelectPet" class="w-full py-6 md:py-8 bg-white text-slate-900 font-black rounded-[2.5rem] shadow-[0_20px_50px_rgba(255,255,255,0.3)] hover:scale-105 transition-all text-2xl uppercase tracking-widest active:scale-95 flex items-center justify-center gap-3">
+                        ¡Elegir! <i class="ph-bold ph-sparkle text-brand-500"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Derecha: Selector de Rejilla -->
+            <div class="flex-[2] bg-slate-900/60 backdrop-blur-2xl rounded-[3.5rem] p-6 shadow-2xl ring-1 ring-white/10 flex flex-col overflow-hidden shrink-0">
+                <h3 class="text-center font-black text-slate-400 uppercase tracking-widest text-sm mb-6 mt-4">Peleadores / Mascotas</h3>
+                
+                <div class="flex-1 grid grid-cols-2 gap-4 auto-rows-fr">
+                    <!-- Gizzmo Slot (Selected) -->
+                    <div class="bg-gradient-to-br from-brand-400 to-brand-600 rounded-3xl p-1.5 ring-4 ring-white shadow-[0_0_30px_rgba(16,185,129,0.4)] cursor-pointer transform hover:scale-105 transition-transform relative overflow-hidden flex">
+                        <img src="assets/mascotas/Gizzmo/Idle.jpg" class="w-full h-full object-cover rounded-2xl">
+                        <div class="absolute inset-x-0 bottom-3 text-center z-10 drop-shadow-lg">
+                            <span class="bg-slate-900/90 text-white font-black uppercase text-xs px-4 py-1.5 rounded-full backdrop-blur-md italic tracking-widest">Gizzmo</span>
+                        </div>
+                    </div>
+
+                    <!-- Locked slot 1 -->
+                    <div class="bg-slate-800 rounded-3xl p-1.5 ring-2 ring-slate-700 opacity-70 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-slate-900 flex items-center justify-center z-10 transition-opacity">
+                            <i class="ph-fill ph-lock-key text-5xl text-slate-700 group-hover:text-slate-600 transition-colors"></i>
+                        </div>
+                        <div class="absolute inset-x-0 bottom-3 text-center z-20">
+                            <span class="bg-black/80 text-slate-400 font-bold uppercase text-[10px] px-3 py-1 rounded-full">Próximamente</span>
+                        </div>
+                    </div>
+
+                    <!-- Locked slot 2 -->
+                    <div class="bg-slate-800 rounded-3xl p-1.5 ring-2 ring-slate-700 opacity-70 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-slate-900 flex items-center justify-center z-10 transition-opacity">
+                            <i class="ph-fill ph-lock-key text-5xl text-slate-700 group-hover:text-slate-600 transition-colors"></i>
+                        </div>
+                        <div class="absolute inset-x-0 bottom-3 text-center z-20">
+                            <span class="bg-black/80 text-slate-400 font-bold uppercase text-[10px] px-3 py-1 rounded-full">Próximamente</span>
+                        </div>
+                    </div>
+
+                    <!-- Locked slot 3 -->
+                    <div class="bg-slate-800 rounded-3xl p-1.5 ring-2 ring-slate-700 opacity-70 flex flex-col items-center justify-center relative overflow-hidden group">
+                        <div class="absolute inset-0 bg-slate-900 flex items-center justify-center z-10 transition-opacity">
+                            <i class="ph-fill ph-lock-key text-5xl text-slate-700 group-hover:text-slate-600 transition-colors"></i>
+                        </div>
+                        <div class="absolute inset-x-0 bottom-3 text-center z-20">
+                            <span class="bg-black/80 text-slate-400 font-bold uppercase text-[10px] px-3 py-1 rounded-full">Próximamente</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/petAnimator.js"></script>
     <script src="js/dashboard.js"></script>
     <script src="js/pwa.js"></script>
