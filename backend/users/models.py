@@ -70,6 +70,11 @@ class Profile(models.Model):
         verbose_name='Avatar de Google',
         help_text='URL del avatar de perfil de Google'
     )
+    is_onboarded = models.BooleanField(
+        default=False,
+        verbose_name='Completó Onboarding',
+        help_text='Indica si el usuario completó el flujo de primer inicio de sesión'
+    )
 
     class Meta:
         verbose_name = 'Perfil'

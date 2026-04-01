@@ -49,6 +49,8 @@ class ProfileSerializer(serializers.ModelSerializer):
             'coins',
             'accesorios_equipados',
             'profile_picture',
+            'google_avatar',
+            'is_onboarded',
             'fecha_creacion',
             'fecha_actualizacion'
         ]

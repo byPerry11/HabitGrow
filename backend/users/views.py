@@ -46,6 +46,19 @@ class ProfileViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(profile, data=request.data, partial=True)
                 serializer.is_valid(raise_exception=True)
                 serializer.save()
+                
+                # Sincronizar username si viene en la petición
+                new_username = request.data.get('username')
+                if new_username and new_username != request.user.username:
+                    try:
+                        request.user.username = new_username
+                        request.user.save()
+                    except Exception as e:
+                        # Si hay colisión u otro error, omitir o manejar log
+                        pass
+                
+                # Volver a serializar para incluir el username actualizado
+                serializer = self.get_serializer(profile)
                 return Response(serializer.data)
             
             # GET: retornar perfil
