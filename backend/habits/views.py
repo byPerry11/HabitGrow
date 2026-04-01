@@ -38,9 +38,10 @@ class HabitViewSet(viewsets.ModelViewSet):
     
     def get_queryset(self):
         """
-        Filtra para que cada usuario solo vea sus propios hábitos.
+        Filtra para que cada usuario solo vea sus propios hábitos 
+        y no los que están en la papelera (is_deleted).
         """
-        return Habit.objects.filter(user=self.request.user)
+        return Habit.objects.filter(user=self.request.user, is_deleted=False)
     
     def get_serializer_class(self):
         """
@@ -51,6 +52,14 @@ class HabitViewSet(viewsets.ModelViewSet):
         elif self.action == 'retrieve':
             return HabitWithLogsSerializer
         return HabitSerializer
+
+    def perform_destroy(self, instance):
+        """
+        Realiza un borrado lógico (envía a la papelera).
+        """
+        instance.is_deleted = True
+        instance.deleted_at = timezone.now()
+        instance.save()
     
     def create(self, request, *args, **kwargs):
         """

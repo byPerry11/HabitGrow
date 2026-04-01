@@ -112,9 +112,11 @@ async function fetchProfile() {
                 if (profilePagePic) profilePagePic.src = imgSrc;
             }
 
-            // Actualizar datos del perfil en la vista de perfil
+            const profileName = document.getElementById('profileName');
+            if (profileName) profileName.textContent = data.username;
+
             const profileEmail = document.getElementById('profileEmail');
-            if (profileEmail) profileEmail.textContent = data.email;
+            if (profileEmail) profileEmail.textContent = `@${data.username}`; // Mostrar @username en lugar de email, o simplemente el username
             
             const profileJoinDate = document.getElementById('profileJoinDate');
             if (profileJoinDate && data.date_joined) {
@@ -1498,6 +1500,7 @@ window.toggleDropdown = toggleDropdown;
 // --- ASISTENTE DE PRIMER INGRESO (ONBOARDING) ---
 let currentObStep = 1;
 let obProfileFile = null;
+let pendingObHabit = null; // Variable para guardar el hábito del paso 2
 
 function startOnboarding() {
     document.getElementById('mainContent').classList.add('hidden');
@@ -1578,8 +1581,6 @@ async function handleObHabitSubmit(e) {
     e.preventDefault();
     const btn = document.getElementById('btnCreateObHabit');
     const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="ph-bold ph-spinner animate-spin"></i> Guardando...';
-    btn.disabled = true;
 
     const nombre = document.getElementById('obHabitInput').value.trim();
     const categoria = document.querySelector('input[name="obCategory"]:checked').value;
@@ -1591,24 +1592,21 @@ async function handleObHabitSubmit(e) {
     
     const totalPasos = parseInt(document.getElementById('obStepsInput').value) || 1;
 
-    try {
-        await authenticatedFetch(`${API_BASE_URL}/habits/`, {
-            method: 'POST',
-            body: JSON.stringify({
-                nombre: nombre,
-                categoria: categoria,
-                dias_semana: selectedDays || "0,1,2,3,4,5,6",
-                total_pasos: totalPasos,
-                activo: true
-            })
-        });
-        showToast('¡Primer hábito plantado!', 'success');
-        nextObStep(3);
-    } catch (error) {
-        showToast('Error al crear el hábito', 'error');
-        btn.innerHTML = originalText;
-        btn.disabled = false;
-    }
+    // GUARDAR LOCALMENTE EN LUGAR DE ENVIAR
+    pendingObHabit = {
+        nombre: nombre,
+        categoria: categoria,
+        dias_semana: selectedDays || "0,1,2,3,4,5,6",
+        total_pasos: totalPasos,
+        activo: true
+    };
+
+    showToast('¡Hábito planeado! Lo plantaremos al finalizar.', 'success');
+    nextObStep(3);
+    
+    // Restaurar botón (ya no es async aquí)
+    btn.innerHTML = originalText;
+    btn.disabled = false;
 }
 
 async function finishOnboarding() {
@@ -1619,14 +1617,20 @@ async function finishOnboarding() {
     try {
         // 1. Adoptar Mascota (Gizzmo)
         const petName = document.getElementById('obPetNameInput').value.trim() || 'Gizzmo';
-        try {
-            await authenticatedFetch(`${API_BASE_URL}/mascota/adoptar/`, {
-                method: 'POST',
-                body: JSON.stringify({ nombre: petName, especie: 'gizzmo' })
-            });
-        } catch(e) { /* Si ya había adoptado por error, ignorar */ }
+        await authenticatedFetch(`${API_BASE_URL}/mascota/adoptar/`, {
+            method: 'POST',
+            body: JSON.stringify({ nombre: petName, especie: 'gizzmo' })
+        });
 
-        // 2. Actualizar Profile (is_onboarded, username y foto)
+        // 2. Crear el Hábito si existe
+        if (pendingObHabit) {
+            await authenticatedFetch(`${API_BASE_URL}/habits/`, {
+                method: 'POST',
+                body: JSON.stringify(pendingObHabit)
+            });
+        }
+
+        // 3. Actualizar Profile (is_onboarded, username y foto)
         const username = document.getElementById('obUsernameInput').value.trim();
         
         let formData = new FormData();
@@ -1637,20 +1641,21 @@ async function finishOnboarding() {
         const token = localStorage.getItem('token');
         await fetch(`${API_BASE_URL}/profile/me/`, {
             method: 'PATCH',
-            headers: { 'Authorization': `Token ${token}` }, // FormData no usa Content-Type manual
+            headers: { 'Authorization': `Token ${token}` },
             body: formData
         });
 
-        // 3. Finalizar y mostrar dashboard
+        // 4. Finalizar y mostrar dashboard
         showToast('¡Bienvenido a HabitGrow!', 'success');
         document.getElementById('onboardingWidget').classList.add('opacity-0');
         setTimeout(() => {
-            window.location.reload(); // Recargar completo para limpiar vistas
+            window.location.reload();
         }, 500);
 
     } catch (error) {
-        showToast('Ocurrió un error. Intenta de nuevo', 'error');
-        btn.innerHTML = '¡Elegir! <i class="ph-bold ph-sparkle text-brand-500"></i>';
+        console.error("Onboarding error:", error);
+        showToast('Ocurrió un error finalizando el proceso.', 'error');
+        btn.innerHTML = 'Confirmar <i class="ph-bold ph-check-circle text-brand-500"></i>';
         btn.disabled = false;
     }
 }

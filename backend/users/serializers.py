@@ -58,7 +58,12 @@ class ProfileSerializer(serializers.ModelSerializer):
     
     def to_representation(self, instance):
         """
-        Personalizar la respuesta para incluir información útil.
+        Personalizar la respuesta para incluir información útil y fallback de avatar.
         """
         data = super().to_representation(instance)
+        
+        # Fallback para profile_picture: Si no tiene, usar google_avatar
+        if not data.get('profile_picture') and instance.google_avatar:
+            data['profile_picture'] = instance.google_avatar
+            
         return data

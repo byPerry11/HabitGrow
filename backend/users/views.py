@@ -50,12 +50,20 @@ class ProfileViewSet(viewsets.ModelViewSet):
                 # Sincronizar username si viene en la petición
                 new_username = request.data.get('username')
                 if new_username and new_username != request.user.username:
+                    from django.contrib.auth.models import User
+                    if User.objects.filter(username=new_username).exclude(id=request.user.id).exists():
+                        return Response(
+                            {'error': f'El nombre de usuario "{new_username}" ya está en uso.'},
+                            status=status.HTTP_400_BAD_REQUEST
+                        )
                     try:
                         request.user.username = new_username
                         request.user.save()
                     except Exception as e:
-                        # Si hay colisión u otro error, omitir o manejar log
-                        pass
+                        return Response(
+                            {'error': 'Error al actualizar el nombre de usuario.'},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        )
                 
                 # Volver a serializar para incluir el username actualizado
                 serializer = self.get_serializer(profile)

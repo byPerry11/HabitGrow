@@ -82,6 +82,16 @@ class Habit(models.Model):
         verbose_name='Activo',
         help_text='Si el hábito está activo o archivado'
     )
+    is_deleted = models.BooleanField(
+        default=False,
+        verbose_name='Borrado',
+        help_text='Indica si el hábito está en la papelera'
+    )
+    deleted_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Fecha de Eliminación'
+    )
     fecha_creacion = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Fecha de Creación'
@@ -96,7 +106,7 @@ class Habit(models.Model):
         verbose_name_plural = 'Hábitos'
         ordering = ['-fecha_creacion']
         indexes = [
-            models.Index(fields=['user', 'activo']),
+            models.Index(fields=['user', 'activo', 'is_deleted']),
             models.Index(fields=['fecha_creacion']),
         ]
     
