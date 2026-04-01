@@ -43,9 +43,7 @@ function initUI() {
     // Configurar listeners de eventos
     const habitForm = document.getElementById('habitForm');
     if (habitForm) {
-        // El formulario ya tiene onsubmit="handleHabitSubmit(event)" en el HTML, 
-        // pero podemos mantenerlo robusto si se quita del HTML.
-        habitForm.addEventListener('submit', handleHabitSubmit);
+        // El formulario ya declara onsubmit="handleHabitSubmit(event)" en el HTML.
     }
 
     // Actualizar texto del slider de pasos
@@ -228,7 +226,8 @@ function renderPet(mascota) {
         petAnimator = null;
     }
 
-    if (isBaby) {
+    // Animaciones inhabilitadas temporalmente
+    if (false && isBaby) {
         petAnimator = new PetAnimator(petContainer, {
             basePath: 'assets/mascotas/Gizzmo/animations',
             animations: {
@@ -581,15 +580,21 @@ function renderHabitsList() {
                         <i class="ph-fill ${iconClass}"></i>
                      </div>
                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2">
-                            <h4 class="font-bold text-slate-800 text-sm truncate ${isCompleted ? 'line-through text-slate-400' : ''}">${habit.nombre}</h4>
-                            <div class="hidden group-hover:flex items-center gap-1">
-                                <button onclick="editHabit(${habit.id})" class="text-slate-300 hover:text-brand-500 transition-colors p-1" title="Editar">
-                                    <i class="ph-bold ph-pencil-simple text-xs"></i>
+                        <div class="flex items-center justify-between w-full">
+                            <h4 class="font-bold text-slate-800 text-sm truncate pr-2 ${isCompleted ? 'line-through text-slate-400' : ''}">${habit.nombre}</h4>
+                            <div class="relative">
+                                <button onclick="toggleDropdown(event, ${habit.id})" class="text-slate-300 hover:text-brand-500 transition-colors p-1 flex items-center justify-center focus:outline-none" title="Opciones">
+                                    <i class="ph-bold ph-dots-three-vertical text-lg"></i>
                                 </button>
-                                <button onclick="deleteHabit(${habit.id})" class="text-slate-300 hover:text-red-500 transition-colors p-1" title="Eliminar">
-                                    <i class="ph-bold ph-trash text-xs"></i>
-                                </button>
+                                <div id="dropdown-${habit.id}" class="hidden absolute right-0 mt-1 w-36 bg-white rounded-xl shadow-xl border border-slate-100 z-[100] overflow-hidden">
+                                    <button onclick="editHabit(${habit.id})" class="w-full text-left px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-brand-600 flex items-center gap-2 transition-colors">
+                                        <i class="ph-bold ph-pencil-simple text-brand-500"></i> Editar
+                                    </button>
+                                    <div class="h-px bg-slate-100 w-full"></div>
+                                    <button onclick="deleteHabit(${habit.id})" class="w-full text-left px-4 py-2.5 text-sm font-medium text-red-500 hover:bg-red-50 flex items-center gap-2 transition-colors">
+                                        <i class="ph-bold ph-trash text-red-500"></i> Eliminar
+                                    </button>
+                                </div>
                             </div>
                         </div>
                         <p class="text-[10px] text-slate-400 mt-0.5 font-bold uppercase">${categoryName} • Racha: ${habit.racha_actual} 🔥</p>
@@ -1429,6 +1434,28 @@ async function authenticatedFetch(url, options = {}) {
     return response.json();
 }
 
+function toggleDropdown(e, habitId) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Cerrar otros dropdowns abiertos
+    document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+        if (el.id !== `dropdown-${habitId}`) {
+            el.classList.add('hidden');
+        }
+    });
+    
+    const dropdown = document.getElementById(`dropdown-${habitId}`);
+    if (dropdown) dropdown.classList.toggle('hidden');
+}
+
+// Global click para cerrar dropdowns al hacer clic fuera
+document.addEventListener('click', () => {
+    document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+        el.classList.add('hidden');
+    });
+});
+
 // Globals for HTML onclicks
 window.toggleModal = toggleModal;
 window.changePage = changePage;
@@ -1437,3 +1464,4 @@ window.toggleHabit = toggleHabit;
 window.handleHabitSubmit = handleHabitSubmit;
 window.openAdoptionModal = openAdoptionModal;
 window.closeAdoptionModal = closeAdoptionModal;
+window.toggleDropdown = toggleDropdown;
