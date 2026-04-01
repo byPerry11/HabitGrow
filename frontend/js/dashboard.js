@@ -1584,14 +1584,21 @@ async function handleObHabitSubmit(e) {
     const nombre = document.getElementById('obHabitInput').value.trim();
     const categoria = document.querySelector('input[name="obCategory"]:checked').value;
     
+    // Capturar días de la semana
+    const selectedDays = Array.from(document.querySelectorAll('input[name="obDays"]:checked'))
+                             .map(cb => cb.value)
+                             .join(',');
+    
+    const totalPasos = parseInt(document.getElementById('obStepsInput').value) || 1;
+
     try {
         await authenticatedFetch(`${API_BASE_URL}/habits/`, {
             method: 'POST',
             body: JSON.stringify({
                 nombre: nombre,
                 categoria: categoria,
-                dias_semana: "0,1,2,3,4,5,6", // Todos los días por defecto
-                total_pasos: 1,
+                dias_semana: selectedDays || "0,1,2,3,4,5,6",
+                total_pasos: totalPasos,
                 activo: true
             })
         });
@@ -1611,10 +1618,11 @@ async function finishOnboarding() {
 
     try {
         // 1. Adoptar Mascota (Gizzmo)
+        const petName = document.getElementById('obPetNameInput').value.trim() || 'Gizzmo';
         try {
             await authenticatedFetch(`${API_BASE_URL}/mascota/adoptar/`, {
                 method: 'POST',
-                body: JSON.stringify({ nombre: 'Gizzmo', especie: 'gizzmo' })
+                body: JSON.stringify({ nombre: petName, especie: 'gizzmo' })
             });
         } catch(e) { /* Si ya había adoptado por error, ignorar */ }
 
