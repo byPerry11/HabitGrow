@@ -6,7 +6,7 @@ from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
 
 # Importar ViewSets
-from users.views import ProfileViewSet
+from users.views import ProfileViewSet, VapidKeyView
 from pets.views import MascotaViewSet
 from habits.views import HabitViewSet, HabitLogViewSet
 from habitgrow.views import DashboardViewSet
@@ -25,9 +25,13 @@ urlpatterns = [
     
     # API v1
     path('api/v1/', include(router.urls)),
+    path('api/v1/vapid-key/', VapidKeyView.as_view(), name='vapid-key'),
     
     # API Authentication (DRF browsable API login)
     path('api-auth/', include('rest_framework.urls')),
+    
+    # Webpush Notifications
+    path('webpush/', include('webpush.urls')),
     
     # API Documentation (Swagger/OpenAPI)
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),

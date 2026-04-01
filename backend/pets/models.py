@@ -91,6 +91,12 @@ class Mascota(models.Model):
         verbose_name='Último Chequeo',
         help_text='Última vez que se actualizó la salud'
     )
+    last_health_notified_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Última Notificación de Salud',
+        help_text='Evita spam de notificaciones cuando la mascota está mal'
+    )
     
     class Meta:
         verbose_name = 'Mascota'
@@ -159,6 +165,10 @@ class Mascota(models.Model):
         
         self.save()
         
+        
+        # Enviar alerta si es necesario
+        self._check_send_health_alert()
+        
         return {
             'dias_sin_actividad': dias_sin_actividad,
             'deterioro_aplicado': deterioro,
@@ -166,6 +176,34 @@ class Mascota(models.Model):
             'estado_salud': self.get_estado_salud_display(),
             'mensaje': mensaje
         }
+
+    def _check_send_health_alert(self):
+        """
+        Envía una notificación si la mascota está descuidada (salud < 50%).
+        Evita spam usando last_health_notified_at (mínimo 24h entre alertas).
+        """
+        from django.utils import timezone
+        from datetime import timedelta
+        try:
+            from webpush import send_user_notification
+        except ImportError:
+            return
+
+        if self.puntos_vida < 50:
+            ahora = timezone.now()
+            # Si no ha sido notificado hace más de 12 horas (más agresivo que 24h para salud)
+            if not self.last_health_notified_at or (ahora - self.last_health_notified_at) > timedelta(hours=12):
+                payload = {
+                    'title': f'🐾 ¡{self.nombre} te necesita!',
+                    'body': f'Tu mascota está en estado "{self.get_estado_salud_display()}". ¡Completa tus hábitos para animarla!',
+                    'url': '/dashboard'
+                }
+                try:
+                    send_user_notification(user=self.user, payload=payload, ttl=1000)
+                    self.last_health_notified_at = ahora
+                    self.save(update_fields=['last_health_notified_at'])
+                except Exception as e:
+                    print(f"Error enviando notificación de salud: {e}")
     
     def _update_estado_salud(self) -> None:
         """

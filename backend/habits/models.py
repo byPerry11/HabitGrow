@@ -87,6 +87,17 @@ class Habit(models.Model):
         verbose_name='Borrado',
         help_text='Indica si el hábito está en la papelera'
     )
+    notificaciones_activas = models.BooleanField(
+        default=False,
+        verbose_name='Notificaciones Activas',
+        help_text='Si el usuario desea recibir recordatorios para este hábito'
+    )
+    hora_notificacion = models.TimeField(
+        null=True,
+        blank=True,
+        verbose_name='Hora de Notificación',
+        help_text='Hora a la que se enviará el recordatorio diario'
+    )
     deleted_at = models.DateTimeField(
         null=True,
         blank=True,

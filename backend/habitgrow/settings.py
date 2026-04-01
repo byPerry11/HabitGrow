@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'drf_spectacular',
     'django_filters',
     'import_export',
+    'webpush',
     
     # Local apps
     'users.apps.UsersConfig',
@@ -233,3 +234,11 @@ GOOGLE_CLIENT_ID = config(
     'GOOGLE_CLIENT_ID',
     default='866585569442-obck0r7o5u6q7664e2rs25b3ou55root.apps.googleusercontent.com'
 )
+
+
+# Webpush Notifications (PWA)
+WEBPUSH_SETTINGS = {
+    "VAPID_PUBLIC_KEY": config("VAPID_PUBLIC_KEY", default="BNoM7A6mO-v0-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-v-I"), # Placeholder
+    "VAPID_PRIVATE_KEY": config("VAPID_PRIVATE_KEY", default=""),
+    "VAPID_ADMIN_EMAIL": config("VAPID_ADMIN_EMAIL", default="admin@habitgrowtracking.com")
+}

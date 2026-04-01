@@ -149,3 +149,27 @@ def save_user_profile(sender, instance, **kwargs):
     """
     if hasattr(instance, 'profile'):
         instance.profile.save()
+
+
+class PushSubscription(models.Model):
+    """
+    Almacena las suscripciones de Push API (PWA) de los usuarios.
+    Un usuario puede tener múltiples suscripciones (una por dispositivo).
+    """
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='push_subscriptions',
+        verbose_name='Usuario'
+    )
+    endpoint = models.TextField(unique=True, verbose_name='Endpoint URL')
+    p256dh = models.CharField(max_length=255, verbose_name='P256DH Key')
+    auth = models.CharField(max_length=255, verbose_name='Auth Secret')
+    fecha_creacion = models.DateTimeField(auto_now_add=True, verbose_name='Fecha de Creación')
+
+    class Meta:
+        verbose_name = 'Suscripción Push'
+        verbose_name_plural = 'Suscripciones Push'
+
+    def __str__(self):
+        return f"Suscripción de {self.user.username} - {self.endpoint[:30]}..."

@@ -8,6 +8,23 @@ from .models import Profile
 from .serializers import ProfileSerializer, UserSerializer
 from .forms import RegistroUsuarioForm
 from habitgrow.permissions import IsOwner
+from rest_framework.views import APIView
+from django.conf import settings
+
+
+class VapidKeyView(APIView):
+    """
+    Endpoint para obtener la VAPID_PUBLIC_KEY configurada en el servidor.
+    Permite al frontend suscribirse a notificaciones push dinámicamente.
+    """
+    permission_classes = [permissions.AllowAny] # Público para que el Service Worker lo use fácilmente
+
+    def get(self, request):
+        # Obtener la configuración de webpush de settings
+        webpush_settings = getattr(settings, 'WEBPUSH_SETTINGS', {})
+        public_key = webpush_settings.get('VAPID_PUBLIC_KEY', '')
+        
+        return Response({'public_key': public_key})
 
 
 class ProfileViewSet(viewsets.ModelViewSet):

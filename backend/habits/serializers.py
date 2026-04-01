@@ -33,7 +33,9 @@ class HabitSerializer(serializers.ModelSerializer):
             'categoria',
             'dias_semana',
             'total_pasos',
-            'pasos_completados_hoy'
+            'pasos_completados_hoy',
+            'notificaciones_activas',
+            'hora_notificacion'
         ]
         read_only_fields = ['id', 'user', 'fecha_creacion', 'fecha_actualizacion']
     
@@ -64,7 +66,7 @@ class HabitCreateSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Habit
-        fields = ['id', 'nombre', 'descripcion', 'dias_semana', 'total_pasos', 'activo', 'categoria']
+        fields = ['id', 'nombre', 'descripcion', 'dias_semana', 'total_pasos', 'activo', 'categoria', 'notificaciones_activas', 'hora_notificacion']
         read_only_fields = ['id']
     
     def create(self, validated_data):
