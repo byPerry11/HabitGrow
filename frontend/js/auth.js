@@ -174,10 +174,18 @@ async function handleGoogleLogin(response) {
     }
 }
 
-// Initial check — redirige al dashboard si ya tiene sesión activa
+// Initial check — redirige al dashboard si ya tiene sesión activa o cambia de pestaña si se solicita
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('token');
     if (token) {
         window.location.href = 'dashboard.html';
+        return;
+    }
+
+    // Detectar si el usuario quiere registrarse directamente (desde Landing Page)
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    if (mode === 'register' && typeof switchTab === 'function') {
+        switchTab('register');
     }
 });

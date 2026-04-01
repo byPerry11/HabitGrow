@@ -1,0 +1,9 @@
+# Group: Public
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /auth.html
+Disallow: /dashboard.html
+
+# Sitemap link
+Sitemap: https://habitgrowtracking.com/sitemap.xml

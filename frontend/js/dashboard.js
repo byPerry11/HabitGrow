@@ -1,3 +1,28 @@
+// Global Theme Management
+function initTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
+
+function toggleTheme() {
+    const html = document.documentElement;
+    const isDark = html.classList.toggle('dark');
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    
+    // Sincronizar checkbox si existe en el DOM
+    const toggle = document.getElementById('themeToggle');
+    if (toggle) toggle.checked = isDark;
+    
+    showToast(`Modo ${isDark ? 'Oscuro' : 'Claro'} activado`, 'info');
+}
+
+// Inicializar el tema antes de que el DOM esté listo
+initTheme();
+
 // URL base de la API del backend
 const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_BASE_URL = isLocalhost ? 'http://localhost:8000/api/v1' : 'https://api.habitgrowtracking.com/api/v1';
@@ -1199,9 +1224,10 @@ function changePage(page) {
     // Defaulting 'dashboard' to 'home'
     if (page === 'dashboard') page = 'home';
 
-    const views = ['homeView', 'statsView', 'profileView', 'shopView'];
+    const views = ['homeView', 'statsView', 'profileView', 'shopView', 'settingsView'];
     views.forEach(viewId => {
-        document.getElementById(viewId)?.classList.add('hidden');
+        const el = document.getElementById(viewId);
+        if (el) el.classList.add('hidden');
     });
 
     const mainHeader = document.getElementById('mainHeader');
@@ -1249,6 +1275,17 @@ function changePage(page) {
         updateSidebar('nav-shop');
 
         mainHeader?.classList.add('hidden');
+    } else if (page === 'settings') {
+        document.getElementById('settingsView')?.classList.remove('hidden');
+        updateSidebar('nav-profile'); // Mantener perfil resaltado o ninguno
+
+        mainHeader?.classList.add('hidden');
+        
+        // Sincronizar estado del toggle de tema
+        const themeToggle = document.getElementById('themeToggle');
+        if (themeToggle) {
+            themeToggle.checked = document.documentElement.classList.contains('dark');
+        }
     }
 }
 
@@ -1496,6 +1533,26 @@ window.handleHabitSubmit = handleHabitSubmit;
 window.openAdoptionModal = openAdoptionModal;
 window.closeAdoptionModal = closeAdoptionModal;
 window.toggleDropdown = toggleDropdown;
+window.requestNotificationPermission = requestNotificationPermission;
+
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        showToast('Este navegador no soporta notificaciones', 'error');
+        return;
+    }
+
+    try {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            showToast('¡Notificaciones activadas!', 'success');
+            // Aquí se podría registrar el Service Worker para Push
+        } else {
+            showToast('Permiso de notificación denegado', 'warning');
+        }
+    } catch (error) {
+        console.error("Error solicitando permisos:", error);
+    }
+}
 
 // --- ASISTENTE DE PRIMER INGRESO (ONBOARDING) ---
 let currentObStep = 1;

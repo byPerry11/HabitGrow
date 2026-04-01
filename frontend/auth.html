@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acceder a HabitGrow - Cultiva tus Hábitos</title>
+  <meta name="description" content="Inicia sesión o regístrate en HabitGrow para empezar a cuidar de tu mascota virtual y mejorar tu productividad diaria.">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="icon" href="assets/icon.png">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#10b981">
+  <!-- Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+  <!-- Google Sign-In SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981', // Emerald primary
+              600: '#059669',
+              900: '#064e3b',
+            }
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'float-delayed': 'float 7s ease-in-out infinite 1s',
+            'shake': 'shake 0.5s cubic-bezier(.36,.07,.19,.97) both',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            shake: {
+              '10%, 90%': { transform: 'translate3d(-1px, 0, 0)' },
+              '20%, 80%': { transform: 'translate3d(2px, 0, 0)' },
+              '30%, 50%, 70%': { transform: 'translate3d(-4px, 0, 0)' },
+              '40%, 60%': { transform: 'translate3d(4px, 0, 0)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Inputs */
+    .input-group:focus-within i {
+      color: #10b981;
+      /* brand-500 */
+    }
+
+    .input-group:focus-within {
+      border-color: #10b981;
+      box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1);
+    }
+
+    /* Smooth transitions for forms */
+    .form-enter {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Password strength meter */
+    .strength-segment {
+      transition: all 0.3s ease;
+    }
+  </style>
+</head>
+
+<body
+  class="bg-slate-50 font-sans min-h-screen flex flex-col items-center justify-center relative px-4 py-12">
+
+  <!-- Background Elements (Matches Dashboard) -->
+  <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-brand-200/20 rounded-full blur-3xl animate-float">
+    </div>
+    <div
+      class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-200/20 rounded-full blur-3xl animate-float-delayed">
+    </div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="w-full max-w-md relative z-10">
+
+    <!-- Brand Header -->
+    <div class="text-center mb-8">
+      <div
+        class="inline-flex items-center justify-center w-24 h-24 bg-transparent rounded-2xl shadow-xl shadow-slate-900/20 mb-4 animate-float overflow-hidden">
+        <img src="assets/icon.png" alt="HabitGrow Logo" class="w-full h-full object-cover">
+      </div>
+      <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Bienvenido de nuevo</h1>
+      <p class="text-slate-500 font-medium mt-2">Continúa tu viaje con HabitGrow.</p>
+      <a href="index.html" class="inline-flex items-center gap-1 text-xs font-bold text-brand-600 mt-4 hover:underline">
+        <i class="ph ph-arrow-left"></i> Volver al inicio
+      </a>
+    </div>
+
+    <!-- Auth Card -->
+    <div
+      class="bg-white/80 backdrop-blur-xl border border-white rounded-[2rem] shadow-2xl p-6 overflow-hidden relative">
+
+      <!-- Tabs -->
+      <div class="flex p-1 bg-slate-100 rounded-xl mb-6 relative">
+        <!-- Sliding Indicator (JS handles positioning) -->
+        <div id="tabIndicator"
+          class="absolute top-1 bottom-1 left-1 w-[calc(50%-4px)] bg-white rounded-lg shadow-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]">
+        </div>
+
+        <button onclick="switchTab('login')" id="tab-login"
+          class="flex-1 relative z-10 py-2 text-sm font-bold text-slate-800 transition-colors">
+          Iniciar Sesión
+        </button>
+        <button onclick="switchTab('register')" id="tab-register"
+          class="flex-1 relative z-10 py-2 text-sm font-bold text-slate-500 transition-colors">
+          Registrarse
+        </button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="space-y-4 form-enter" onsubmit="handleLogin(event)">
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email o
+            Usuario</label>
+          <div
+            class="input-group flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2.5 transition-all duration-300">
+            <i class="ph ph-user text-lg text-slate-400 mr-2.5 transition-colors"></i>
+            <input type="text" placeholder="hola@habitgrow.com"
+              class="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-400 font-medium h-full text-sm"
+              required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Contraseña</label>
+          <div
+            class="input-group flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2.5 transition-all duration-300">
+            <i class="ph ph-lock-key text-lg text-slate-400 mr-2.5 transition-colors"></i>
+            <input type="password" id="loginPass" placeholder="••••••••"
+              class="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-400 font-medium h-full text-sm"
+              required>
+            <button type="button" onclick="togglePassword('loginPass', this)"
+              class="text-slate-400 hover:text-slate-600 transition-colors flex items-center justify-center w-5 h-5 shrink-0">
+              <i class="ph ph-eye text-lg"></i>
+              <i class="ph ph-eye-slash text-lg hidden"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs">
+          <label class="flex items-center cursor-pointer group">
+            <input type="checkbox" class="peer sr-only">
+            <div
+              class="w-4 h-4 border-2 border-slate-300 rounded peer-checked:bg-brand-500 peer-checked:border-brand-500 transition-all flex items-center justify-center mr-2 group-hover:border-brand-400">
+              <i class="ph-bold ph-check text-white text-[10px] opacity-0 peer-checked:opacity-100"></i>
+            </div>
+            <span class="text-slate-500 font-medium group-hover:text-slate-700 transition-colors">Recordarme</span>
+          </label>
+          <a href="#" class="font-bold text-brand-600 hover:text-brand-700 transition-colors">¿Olvidaste contraseña?</a>
+        </div>
+
+        <button type="submit"
+          class="w-full py-3 bg-slate-900 text-white font-bold rounded-xl shadow-lg shadow-slate-900/20 hover:bg-slate-800 hover:shadow-xl hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-sm flex items-center justify-center gap-2 group text-sm">
+          <span>Comenzar</span>
+          <i class="ph-bold ph-arrow-right group-hover:translate-x-1 transition-transform"></i>
+        </button>
+
+      </form>
+
+      <!-- Register Form (Hidden by default) -->
+      <form id="registerForm" class="space-y-3 hidden" onsubmit="handleRegister(event)">
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Usuario</label>
+          <div
+            class="input-group flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2.5 transition-all duration-300">
+            <i class="ph ph-user-circle text-lg text-slate-400 mr-2.5 transition-colors"></i>
+            <input type="text" placeholder="Tu nombre público"
+              class="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-400 font-medium h-full text-sm"
+              required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Email</label>
+          <div
+            class="input-group flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2.5 transition-all duration-300">
+            <i class="ph ph-envelope-simple text-lg text-slate-400 mr-2.5 transition-colors"></i>
+            <input type="email" placeholder="tu@email.com"
+              class="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-400 font-medium h-full text-sm"
+              required>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Contraseña</label>
+            <div
+              class="input-group flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2.5 transition-all duration-300">
+              <i class="ph ph-lock-key text-lg text-slate-400 mr-2 transition-colors"></i>
+              <input type="password" id="regPass" placeholder="••••••"
+                class="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-400 font-medium h-full text-sm w-full"
+                oninput="checkStrength(this.value)" required>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Confirmar</label>
+            <div
+              class="input-group flex items-center bg-white border border-slate-200 rounded-xl px-3 py-2.5 transition-all duration-300">
+              <i class="ph ph-check-circle text-lg text-slate-400 mr-2 transition-colors"></i>
+              <input type="password" id="regPassConfirm" placeholder="••••••"
+                class="flex-1 bg-transparent outline-none text-slate-800 placeholder-slate-400 font-medium h-full text-sm w-full"
+                required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Strength Meter -->
+        <div class="-mt-1">
+          <div class="flex gap-1 h-1">
+            <div class="strength-segment flex-1 bg-slate-200 rounded-full"></div>
+            <div class="strength-segment flex-1 bg-slate-200 rounded-full"></div>
+            <div class="strength-segment flex-1 bg-slate-200 rounded-full"></div>
+            <div class="strength-segment flex-1 bg-slate-200 rounded-full"></div>
+          </div>
+          <p class="text-[10px] text-slate-400 font-medium mt-1 text-right" id="strengthText">Mínimo 8 caracteres</p>
+        </div>
+
+        <button type="submit"
+          class="w-full py-3 bg-brand-600 text-white font-bold rounded-xl shadow-lg shadow-brand-600/20 hover:bg-brand-700 hover:shadow-xl hover:-translate-y-0.5 transition-all active:translate-y-0 active:shadow-sm text-sm">
+          Crear Cuenta
+        </button>
+
+        <p class="text-[10px] text-center text-slate-400 px-4">
+          Al registrarte aceptas nuestros <a href="#" class="underline hover:text-slate-600">Términos</a> y <a href="#"
+            class="underline hover:text-slate-600">Política</a>.
+        </p>
+
+      </form>
+
+      <!-- Social Login Divider -->
+      <div class="relative my-5">
+        <div class="absolute inset-0 flex items-center">
+          <div class="w-full border-t border-slate-200"></div>
+        </div>
+        <div class="relative flex justify-center text-[10px] uppercase">
+          <span class="bg-white px-3 text-slate-400 font-bold tracking-widest">O continúa con</span>
+        </div>
+      </div>
+
+      <!-- Botón de Google Sign-In (renderizado por el SDK de Google) -->
+      <div id="googleBtnContainer" class="w-full flex justify-center">
+        <!-- Google renderiza aquí su botón nativo al cargar el SDK -->
+      </div>
+
+      <!-- Footer -->
+      <p class="text-center text-slate-400 text-sm mt-8 font-medium">© 2026 HabitGrow. Hecho con 💚.</p>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+      class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 transition-all duration-500 opacity-0 -translate-y-12 pointer-events-none z-50">
+      <div class="w-6 h-6 bg-brand-500 rounded-full flex items-center justify-center text-slate-900">
+        <i class="ph-bold ph-check text-xs"></i>
+      </div>
+      <span class="font-semibold text-sm" id="toastMsg">¡Bienvenido de vuelta!</span>
+    </div>
+
+    <script src="js/auth.js"></script>
+    <script src="js/pwa.js"></script>
+    <script>
+      // ── Google Identity Services ─── Una sola inicialización ─────
+      window.addEventListener('load', () => {
+        if (typeof google === 'undefined') {
+          console.warn('Google SDK no cargó. Revisa conexión a internet.');
+          return;
+        }
+
+        const CLIENT_ID = '866585569442-obck0r7o5u6q7664e2rs25b3ou55root.apps.googleusercontent.com';
+
+        // Inicializar UNA sola vez
+        google.accounts.id.initialize({
+          client_id: CLIENT_ID,
+          callback: handleGoogleLogin,
+          auto_select: false,
+          cancel_on_tap_outside: true,
+          use_fedcm_for_prompt: true,
+        });
+
+        // Renderizar el botón nativo de Google en el div contenedor
+        const container = document.getElementById('googleBtnContainer');
+        if (container) {
+          google.accounts.id.renderButton(container, {
+            theme: 'outline',
+            size: 'large',
+            text: 'continue_with',
+            shape: 'rectangular',
+            logo_alignment: 'center',
+            width: Math.min(container.offsetWidth || 400, 400),
+            locale: 'es',
+          });
+        }
+
+        // One Tap automático solo si no hay sesión activa
+        const token = localStorage.getItem('token');
+        if (!token) {
+          google.accounts.id.prompt();
+        }
+      });
+    </script>
+    <script>
+      // Tab Switching Logic
+      function switchTab(tab) {
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const tabIndicator = document.getElementById('tabIndicator');
+        const btnLogin = document.getElementById('tab-login');
+        const btnRegister = document.getElementById('tab-register');
+
+        if (tab === 'login') {
+          // Show Login
+          loginForm.classList.remove('hidden');
+          loginForm.classList.add('form-enter');
+          registerForm.classList.add('hidden');
+          registerForm.classList.remove('form-enter');
+
+          // Style Tabs
+          tabIndicator.style.transform = 'translateX(0)';
+          btnLogin.classList.replace('text-slate-500', 'text-slate-800');
+          btnRegister.classList.replace('text-slate-800', 'text-slate-500');
+        } else {
+          // Show Register
+          registerForm.classList.remove('hidden');
+          registerForm.classList.add('form-enter');
+          loginForm.classList.add('hidden');
+          loginForm.classList.remove('form-enter');
+
+          // Style Tabs
+          tabIndicator.style.transform = 'translateX(100%)';
+          btnRegister.classList.replace('text-slate-500', 'text-slate-800');
+          btnLogin.classList.replace('text-slate-800', 'text-slate-500');
+        }
+      }
+
+      // Password Toggle
+      function togglePassword(inputId, btn) {
+        const input = document.getElementById(inputId);
+        const iconEye = btn.querySelector('.ph-eye:not(.ph-eye-slash)');
+        const iconEyeSlash = btn.querySelector('.ph-eye-slash');
+
+        if (input.type === 'password') {
+          input.type = 'text';
+          iconEye.classList.add('hidden');
+          iconEyeSlash.classList.remove('hidden');
+        } else {
+          input.type = 'password';
+          iconEyeSlash.classList.add('hidden');
+          iconEye.classList.remove('hidden');
+        }
+      }
+
+      // Password Strength Checker
+      function checkStrength(password) {
+        const segments = document.querySelectorAll('.strength-segment');
+        const text = document.getElementById('strengthText');
+        let strength = 0;
+
+        if (password.length > 5) strength++;
+        if (password.length > 8) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+
+        // Reset
+        segments.forEach(s => { s.className = 'strength-segment flex-1 bg-slate-200 rounded-full'; });
+
+        // Apply Strength Colors
+        const colors = ['bg-red-400', 'bg-orange-400', 'bg-yellow-400', 'bg-green-500'];
+        const labels = ['Muy débil', 'Débil', 'Buena', '¡Excelente!'];
+
+        for (let i = 0; i < strength; i++) {
+          segments[i].classList.remove('bg-slate-200');
+          segments[i].classList.add(colors[strength - 1] || colors[0]);
+        }
+
+        text.textContent = password.length === 0 ? 'Mínimo 8 caracteres' : (labels[strength - 1] || 'Muy débil');
+      }
+
+      // Toast Notification System
+      function showToast(msg, type) {
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        // Adjust styling based on type? (Currently always slate/green)
+
+        toastMsg.textContent = msg;
+        toast.classList.remove('opacity-0', '-translate-y-12');
+
+        setTimeout(() => {
+          toast.classList.add('opacity-0', '-translate-y-12');
+        }, 3000);
+      }
+    </script>
+</body>
+
+</html>
