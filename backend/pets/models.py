@@ -130,33 +130,39 @@ class Mascota(models.Model):
             # Calcular días desde último hábito cumplido
             dias_sin_actividad = (timezone.now().date() - ultimo_log.fecha_cumplimiento).days
         
-        # LÓGICA DE DETERIORO GRADUAL
+        # LÓGICA DE DETERIORO GRADUAL (Nuevos valores equilibrados)
         deterioro = 0
         mensaje = ""
         
         if dias_sin_actividad == 0:
-            # Actividad hoy - sin deterioro
-            mensaje = "¡Planta feliz! Actividad reciente."
-        elif dias_sin_actividad <= 2:
-            # 1-2 días - deterioro mínimo (tolerancia)
-            deterioro = 0
-            mensaje = f"Planta estable. {dias_sin_actividad} día(s) sin actividad."
-        elif dias_sin_actividad <= 5:
-            # 3-5 días - deterioro moderado
-            deterioro = 10 * (dias_sin_actividad - 2)  # -10, -20, -30
-            mensaje = f"⚠️ Planta necesita atención. {dias_sin_actividad} días sin actividad."
-        elif dias_sin_actividad <= 10:
-            # 6-10 días - deterioro severo
-            deterioro = 15 * (dias_sin_actividad - 2)  # -40, -55, -70...
-            mensaje = f"🚨 Planta en riesgo. {dias_sin_actividad} días sin actividad."
+            mensaje = "¡Tu mascota está feliz! Actividad detectada hoy."
         else:
-            # 10+ días - deterioro crítico
-            deterioro = 100  # Marchitamiento completo
-            mensaje = f"💀 Abandono prolongado. {dias_sin_actividad} días sin actividad."
-        
-        # Aplicar deterioro
+            # 1. Decaimiento Base (2 HP por cada día de ausencia)
+            deterioro += 2 * dias_sin_actividad
+            
+            # 2. Escalado por Negligencia
+            if dias_sin_actividad <= 2:
+                deterioro += 5 * dias_sin_actividad
+                mensaje = f"Tu mascota te extraña. {dias_sin_actividad} día(s) sin actividad."
+            elif dias_sin_actividad <= 5:
+                # 2 días a 5 HP + días restantes a 15 HP
+                deterioro += (5 * 2) + (15 * (dias_sin_actividad - 2))
+                mensaje = f"⚠️ Tu compañero está debilitándose. {dias_sin_actividad} días sin actividad."
+            else:
+                # 2 días a 5 HP + 3 días a 15 HP + días restantes a 25 HP
+                deterioro += (5 * 2) + (15 * 3) + (25 * (dias_sin_actividad - 5))
+                mensaje = f"🚨 ESTADO CRÍTICO: Abandono prolongado ({dias_sin_actividad} días)."
+
+        # Aplicar deterioro de Salud
         self.puntos_vida = max(0, self.puntos_vida - deterioro)
         
+        # 3. Penalización de XP (Si la salud es Crítica < 20%)
+        if self.puntos_vida < 20 and self.total_xp > 0:
+            # Pierde 10 XP por día de abandono prolongado en estado crítico
+            perdida_xp = 10 * max(1, dias_sin_actividad - 5)
+            self.total_xp = max(0, self.total_xp - perdida_xp)
+            mensaje += " Tu mascota pierde XP por desnutrición."
+
         # Actualizar estado de salud basado en puntos_vida
         self._update_estado_salud()
         

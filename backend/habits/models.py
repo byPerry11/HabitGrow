@@ -241,7 +241,7 @@ def update_mascota_on_habit_completion(sender, instance, created, **kwargs):
     # --- RECOMPENSAS POR HÁBITO COMPLETADO ---
     # 1. Añadir XP a la mascota
     if hasattr(user, 'mascota'):
-        user.mascota.add_xp(15)  # +15 XP por cada hábito completado (+50% vs base original)
+        user.mascota.add_xp(20)  # +20 XP por cada hábito (Incrementado desde +15)
     
     # 2. Curar la mascota
     if hasattr(user, 'mascota'):
@@ -280,8 +280,12 @@ def update_mascota_on_habit_completion(sender, instance, created, **kwargs):
         # Verificar si ya se dio la recompensa para ESTA fecha
         # Usamos last_daily_reward_date. Si es diferente a 'today', damos premio.
         if hasattr(user, 'profile'):
-            # Convertimos today a date si es datetime (aunque el modelo define datefield)
             if user.profile.last_daily_reward_date != today:
                 user.profile.coins += 20
+                # BONUS DE DÍA PERFECTO: +50 XP y Salud a tope
+                if hasattr(user, 'mascota'):
+                    user.mascota.add_xp(50) 
+                    user.mascota.heal(30) # Reparación significativa
+                
                 user.profile.last_daily_reward_date = today
                 user.profile.save()

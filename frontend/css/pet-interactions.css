@@ -23,6 +23,16 @@
     opacity: 1;
 }
 
+/* Mobile Optimizations */
+@media (max-width: 640px) {
+    .thought-bubble {
+        bottom: 75%; /* Lower positioning to avoid cutoff */
+        max-width: 85%; /* Fill more width on mobile */
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+}
+
 .thought-bubble p {
     color: #334155;
     font-size: 13px;

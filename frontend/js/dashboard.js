@@ -665,11 +665,19 @@ function renderHabitsList() {
                         <p class="text-[10px] text-slate-400 mt-0.5 font-bold uppercase">${categoryName} • Racha: ${habit.racha_actual} 🔥</p>
                      </div>
                      
-                     <label class="cursor-pointer">
-                        <button class="w-8 h-8 rounded-full border-2 ${isCompleted ? 'border-brand-400 bg-brand-400 cursor-not-allowed opacity-50' : 'border-slate-200 hover:border-brand-400'} flex items-center justify-center transition-all duration-300 group-btn"
-                            ${isCompleted ? 'disabled' : `onclick="toggleHabit(${habit.id})"`}>
-                            ${isCompleted ? '<i class="ph-bold ph-check text-white text-xs"></i>' : (totalSteps > 1 ? '<i class="ph-bold ph-plus text-brand-400 text-xs"></i>' : '<i class="ph-bold ph-check text-slate-200 group-hover:text-brand-400 text-xs"></i>')}
-                        </button>
+                        <div class="flex items-center gap-2">
+                            <!-- Toggle Button (Larger for Mobile) -->
+                            <button class="w-12 h-12 rounded-2xl border-2 ${isCompleted ? 'border-brand-400 bg-brand-400 cursor-not-allowed opacity-50' : 'border-slate-200 hover:border-brand-400 bg-white shadow-sm'} flex items-center justify-center transition-all duration-300 active:scale-90"
+                                ${isCompleted ? 'disabled' : `onclick="toggleHabit(${habit.id})"`}
+                                aria-label="${isCompleted ? 'Hábito completado' : 'Marcar progreso'}">
+                                ${isCompleted ? 
+                                    '<i class="ph-bold ph-check text-white text-lg"></i>' : 
+                                    (totalSteps > 1 ? 
+                                        '<i class="ph-bold ph-plus text-brand-500 text-lg"></i>' : 
+                                        '<i class="ph-bold ph-check text-slate-300 hover:text-brand-500 text-lg"></i>'
+                                    )}
+                            </button>
+                        </div>
                     </label>
                 </div>
                 ${progressHTML}

@@ -4,16 +4,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HabitGrow - Cultiva tus Hábitos con tu Mascota Virtual</title>
-    <meta name="description" content="HabitGrow transforma tu productividad en un juego. Cuida a tu mascota virtual Gizzmo completando tus hábitos diarios.">
-    <meta name="keywords" content="hábitos, productividad, mascota virtual, gamificación, gizzmo, habitgrow">
+    <title>HabitGrow - Cría a tu compañero, forja tu éxito</title>
+    <meta name="description" content="HabitGrow: Transforma tu rutina diaria en el crecimiento de tu mascota virtual. Cría a tu compañero Gizzmo manteniendo tus hábitos y alcanza tus metas.">
+    <meta name="keywords" content="hábitos, productividad, mascota virtual, crianza, gizzmo, habitgrow, bienestar">
     
+    <!-- Redirección Inteligente (Skip Landing si hay sesión) -->
+    <script>
+        if (localStorage.getItem('token')) {
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+
     <!-- Open Graph / Meta TAGS -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://habitgrowtracking.com/">
-    <meta property="og:title" content="HabitGrow - Tu Jardín de Hábitos">
-    <meta property="og:description" content="Cultiva tus hábitos, cosecha tu éxito. Únete a miles de jardineros hoy.">
-    <meta property="og:image" content="assets/icon.png">
+    <meta property="og:title" content="HabitGrow - Cría a tu compañero, forja tu éxito">
+    <meta property="og:description" content="Tus hábitos son su vida. Transforma tu rutina en el crecimiento de tu mascota virtual Gizzmo.">
+    <meta property="og:image" content="https://habitgrowtracking.com/assets/og-image.png">
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="HabitGrow - Cría a tu compañero, forja tu éxito">
+    <meta name="twitter:description" content="Cuida de ti, cuida de ellos. La app de crianza de hábitos y mascotas virtuales.">
+    <meta name="twitter:image" content="https://habitgrowtracking.com/assets/og-image.png">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -73,12 +86,32 @@
                 <span class="font-extrabold text-xl tracking-tight">HabitGrow</span>
             </div>
             <div class="hidden md:flex items-center gap-8 font-bold text-sm text-slate-500">
-                <a href="#features" class="hover:text-brand-600 transition-colors">Características</a>
+                <a href="#features" class="hover:text-brand-600 transition-colors">Vínculo</a>
                 <a href="#about" class="hover:text-brand-600 transition-colors">Sobre Gizzmo</a>
-                <a href="auth.html" class="px-6 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all shadow-md shadow-slate-900/10">Iniciar Sesión</a>
+                <a href="auth.html" class="px-6 py-2 bg-slate-900 text-white rounded-xl hover:bg-slate-800 transition-all shadow-md shadow-slate-900/10">Criar Compañero</a>
             </div>
-            <a href="auth.html" class="md:hidden p-2 bg-slate-100 rounded-xl">
-                <i class="ph-bold ph-user text-xl"></i>
+            
+            <!-- Mobile Menu Toggle (User icon + Menu link) -->
+            <div class="flex items-center gap-2 md:hidden">
+                <a href="auth.html" class="p-2 bg-slate-100 rounded-xl text-slate-900">
+                    <i class="ph-bold ph-user"></i>
+                </a>
+                <button id="mobileMenuBtn" class="p-2 bg-brand-500 text-white rounded-xl">
+                    <i class="ph-bold ph-list"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden Mobile Menu -->
+        <div id="mobileMenu" class="hidden absolute top-24 left-4 right-4 glass rounded-3xl p-6 shadow-2xl flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-300 md:hidden">
+            <a href="#features" class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl font-bold text-slate-700">
+                <i class="ph-bold ph-sparkle text-brand-600"></i> Características
+            </a>
+            <a href="#about" class="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl font-bold text-slate-700">
+                <i class="ph-bold ph-game-controller text-brand-600"></i> Sobre Gizzmo
+            </a>
+            <a href="auth.html" class="flex items-center justify-center gap-3 p-4 bg-slate-900 text-white rounded-2xl font-bold">
+                Comenzar Crianza
             </a>
         </div>
     </nav>
@@ -91,12 +124,12 @@
 
         <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div class="text-center lg:text-left">
-                <span class="inline-block px-4 py-1.5 bg-brand-100 text-brand-700 rounded-full text-xs font-black uppercase tracking-widest mb-6">Próxima Generación de Productividad</span>
+                <span class="inline-block px-4 py-1.5 bg-brand-100 text-brand-700 rounded-full text-xs font-black uppercase tracking-widest mb-6">Próxima Generación de Crianza</span>
                 <h1 class="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-none mb-6">
-                    Cultiva tus <span class="text-brand-600">Hábitos</span>,<br>cosecha tu <span class="italic text-brand-500">éxito</span>.
+                    Tus <span class="text-brand-600">Hábitos</span> son<br>su <span class="italic text-brand-500">Vida</span>.
                 </h1>
                 <p class="text-lg md:text-xl text-slate-500 font-medium max-w-lg mx-auto lg:mx-0 mb-10 leading-relaxed">
-                    Transforma tu rutina diaria en una aventura. Cuida a tu compañero virtual Gizzmo manteniendo tus hábitos y desbloquea recompensas únicas.
+                    Transforma tu rutina diaria en un vínculo inquebrantable. Cría a tu compañero virtual manteniendo tus metas y desbloquea su máximo potencial.
                 </p>
                 <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                     <a href="auth.html?mode=register" class="w-full sm:w-auto px-8 py-4 bg-slate-900 text-white font-bold rounded-2xl text-lg hover:bg-slate-800 hover:-translate-y-1 transition-all shadow-xl shadow-slate-900/20 active:scale-95 flex items-center justify-center gap-2">
@@ -188,5 +221,12 @@
             </div>
         </div>
     </footer>
+    <script>
+        if (localStorage.getItem('token')) window.location.href = 'dashboard.html';
+        document.getElementById('mobileMenuBtn')?.addEventListener('click', () => {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+            document.getElementById('mobileMenu').classList.toggle('flex');
+        });
+    </script>
 </body>
 </html>
