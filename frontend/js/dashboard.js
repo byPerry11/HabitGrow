@@ -768,7 +768,6 @@ let habitIdToDelete = null;
  * Abre el modal de confirmación de borrado
  */
 function deleteHabit(id) {
-    console.log('🗑️ [DEBUG] Abrir modal de borrado para hábito:', id);
     habitIdToDelete = id;
     const modal = document.getElementById('deleteModal');
     const content = document.getElementById('deleteModalContent');
