@@ -1,6 +1,6 @@
 // ─── HabitGrow Service Worker ───────────────────────────────────────────────
 // Incrementa CACHE_VERSION en cada deploy para invalidar caché anterior.
-const CACHE_VERSION = 'anim004';
+const CACHE_VERSION = 'anim005';
 const CACHE_NAME = `habitgrow-cache-${CACHE_VERSION}`;
 
 // Assets que se pre-cachean (solo imágenes y recursos lentos)
