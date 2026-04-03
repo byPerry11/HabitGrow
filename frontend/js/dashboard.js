@@ -760,25 +760,81 @@ async function toggleHabit(id) {
 }
 
 /**
- * Borrado Lógico de Hábito (activo=False)
+ * Variables temporales para el borrado
  */
-async function deleteHabit(id) {
-    if (!confirm('¿Quieres dejar de seguir este hábito? (Se ocultará del listado)')) return;
+let habitIdToDelete = null;
+
+/**
+ * Abre el modal de confirmación de borrado
+ */
+function deleteHabit(id) {
+    habitIdToDelete = id;
+    const modal = document.getElementById('deleteModal');
+    const content = document.getElementById('deleteModalContent');
+    if (!modal) return;
+
+    modal.classList.remove('hidden');
+    
+    // Iniciar animación
+    setTimeout(() => {
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        content.classList.remove('scale-95');
+        content.classList.add('scale-100');
+    }, 10);
+
+    // Configurar el botón de confirmación una sola vez
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    if (confirmBtn) {
+        confirmBtn.onclick = async () => {
+            await executeDelete();
+        };
+    }
+}
+
+/**
+ * Cierra el modal de borrado
+ */
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    const content = document.getElementById('deleteModalContent');
+    if (!modal) return;
+
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    content.classList.remove('scale-100');
+    content.classList.add('scale-95');
+    
+    setTimeout(() => {
+        modal.classList.add('hidden');
+        habitIdToDelete = null;
+    }, 300);
+}
+
+/**
+ * Ejecuta la petición de borrado real a la API
+ */
+async function executeDelete() {
+    if (!habitIdToDelete) return;
 
     try {
-        const response = await authenticatedFetch(`${API_BASE_URL}/habits/${id}/toggle_activo/`, {
-            method: 'POST'
+        const id = habitIdToDelete;
+        // Cambio de POST a DELETE para usar la lógica de perform_destroy en el backend
+        const response = await authenticatedFetch(`${API_BASE_URL}/habits/${id}/`, {
+            method: 'DELETE'
         });
 
-        if (response && response.habit) {
-            // Eliminar del estado local para que desaparezca
-            state.habits = state.habits.filter(h => h.id !== id);
-            renderHabitsList();
-            updateStats();
-            showToast('Hábito ocultado correctamente', 'info');
-        }
+        // El ModelViewSet de DRF devuelve 204 No Content en DELETE exitoso.
+        // authenticatedFetch debería manejarlo bien.
+        
+        // Eliminar del estado local para que desaparezca inmediatamente
+        state.habits = state.habits.filter(h => h.id !== id);
+        renderHabitsList();
+        updateStats();
+        showToast('Hábito eliminado correctamente', 'success');
+        closeDeleteModal();
     } catch (error) {
-        showToast('Error al ocultar el hábito', 'error');
+        console.error('Error al eliminar:', error);
+        showToast('Error al eliminar el hábito', 'error');
+        closeDeleteModal();
     }
 }
 
@@ -1535,6 +1591,11 @@ async function authenticatedFetch(url, options = {}) {
         console.error('❌ [DEBUG] API Error:', error);
         throw error;
     }
+
+    if (response.status === 204) {
+        return null;
+    }
+    
     return response.json();
 }
 
